@@ -1,9 +1,7 @@
+'use client';
+
 import { redirect } from 'next/navigation';
 
-export const metadata = {
-  title: 'Redirecting...',
-};
-
-export default function Page() {
+export default function RootPage() {
   redirect('/login');
 }

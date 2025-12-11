@@ -7,7 +7,13 @@ const config = {
   tabWidth: 2,
   semi: true,
   singleQuote: true,
-  plugins: ['prettier-plugin-tailwindcss'],
+  plugins: [
+    '@trivago/prettier-plugin-sort-imports',
+    'prettier-plugin-tailwindcss',
+  ],
+  importOrder: ['^react', '^next', '^@?\\w', '^@/', '^\\.\\.?/'],
+  importOrderSeparation: true,
+  importOrderSortSpecifiers: true,
 };
 
 export default config;

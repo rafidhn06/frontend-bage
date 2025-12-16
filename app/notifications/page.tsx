@@ -7,6 +7,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
+import NavigationBar from '@/components/NavigationBar';
 import TopBar from '@/components/TopBar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -217,6 +218,7 @@ export default function NotificationsPage() {
           ))}
         </div>
       </main>
+      <NavigationBar />
     </>
   );
 }

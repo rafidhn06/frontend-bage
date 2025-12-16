@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 import { Star, X } from 'lucide-react';
 import { ArrowLeft } from 'lucide-react';
 
+import NavigationBar from '@/components/NavigationBar';
 import PostAction from '@/components/PostAction';
 import TopBar from '@/components/TopBar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -468,6 +469,7 @@ export default function PostPage() {
           ))}
         </div>
       </main>
+      <NavigationBar />
     </>
   );
 }

@@ -128,7 +128,7 @@ export default function LoginForm() {
         />
         <label
           htmlFor="show-password"
-          className="text-secondary-foreground font-normal"
+          className="text-secondary-foreground text-sm font-normal"
         >
           Show password
         </label>

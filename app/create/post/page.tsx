@@ -9,6 +9,7 @@ import {
   Check,
   ChevronsUpDown,
   MapPin,
+  Plus,
   Star,
   Upload,
   X,
@@ -33,15 +34,19 @@ import {
   FileUploadItemMetadata,
   FileUploadItemPreview,
   FileUploadList,
-  FileUploadTrigger,
 } from '@/components/ui/file-upload';
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupText,
+  InputGroupTextarea,
+} from '@/components/ui/input-group';
 import { Label } from '@/components/ui/label';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 
 const places = [
@@ -150,6 +155,17 @@ export default function CreatePostPage() {
     setFiles([]);
   };
 
+  const MAX_CHAR = 150;
+  const [caption, setCaption] = useState('');
+
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+
+    if (value.length <= MAX_CHAR) {
+      setCaption(value);
+    }
+  };
+
   return (
     <>
       <TopBar className="flex w-full items-center gap-3 p-4 text-xl font-semibold">
@@ -163,13 +179,13 @@ export default function CreatePostPage() {
         </Button>
         Create Post
       </TopBar>
-      <main className="xs:pb-[78px] flex flex-col items-center pb-[81px]">
+      <main className="flex flex-col items-center pb-[73px]">
         <div className="w-full max-w-xl">
           <form
             onSubmit={handlePostSubmit}
             className="flex flex-col gap-4 px-4 py-6"
           >
-            <div className="flex flex-col gap-6 sm:flex-row">
+            <div className="flex flex-col gap-4 sm:flex-row">
               <div className="flex min-w-0 flex-1 flex-col gap-2">
                 <Label
                   htmlFor="place"
@@ -177,66 +193,78 @@ export default function CreatePostPage() {
                 >
                   Place<span className="text-red-500">*</span>
                 </Label>
-                <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      id="place"
-                      variant="outline"
-                      role="combobox"
-                      aria-expanded={popoverOpen}
-                      className="justify-between"
-                    >
-                      <div className="flex min-w-0 flex-1 items-center gap-2">
-                        <MapPin className="text-muted-foreground" size={16} />
-                        <span className="text-muted-foreground truncate text-sm font-normal">
-                          {selectedPlace
-                            ? places.find((loc) => loc.value === selectedPlace)
-                                ?.label
-                            : 'Select a place...'}
-                        </span>
-                      </div>
-                      <ChevronsUpDown
-                        className="text-muted-foreground ml-2 shrink-0"
-                        size={16}
-                      />
-                    </Button>
-                  </PopoverTrigger>
+                <div className="flex w-full gap-2">
+                  <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        id="place"
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={popoverOpen}
+                        className="flex-1 justify-between"
+                      >
+                        <div className="flex min-w-0 flex-1 items-center gap-2">
+                          <MapPin className="text-muted-foreground" size={16} />
+                          <span className="text-muted-foreground truncate text-base font-normal md:text-sm">
+                            {selectedPlace
+                              ? places.find(
+                                  (loc) => loc.value === selectedPlace
+                                )?.label
+                              : 'Select place...'}
+                          </span>
+                        </div>
+                        <ChevronsUpDown
+                          className="text-muted-foreground ml-2 shrink-0"
+                          size={16}
+                        />
+                      </Button>
+                    </PopoverTrigger>
 
-                  <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
-                    <Command>
-                      <CommandInput placeholder="Search place..." />
-                      <CommandList>
-                        <CommandEmpty>No place found.</CommandEmpty>
-                        <CommandGroup>
-                          {places.map((loc) => (
-                            <CommandItem
-                              key={loc.value}
-                              value={loc.value}
-                              onSelect={(currentValue) => {
-                                setSelectedPlace(
-                                  currentValue === selectedPlace
-                                    ? ''
-                                    : currentValue
-                                );
-                                setPopoverOpen(false);
-                              }}
-                            >
-                              {loc.label}
-                              <Check
-                                className={cn(
-                                  'ml-auto h-4 w-4',
-                                  selectedPlace === loc.value
-                                    ? 'opacity-100'
-                                    : 'opacity-0'
-                                )}
-                              />
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
+                    <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+                      <Command>
+                        <CommandInput placeholder="Search place..." />
+                        <CommandList>
+                          <CommandEmpty>No place found.</CommandEmpty>
+                          <CommandGroup>
+                            {places.map((loc) => (
+                              <CommandItem
+                                key={loc.value}
+                                value={loc.value}
+                                onSelect={(currentValue) => {
+                                  setSelectedPlace(
+                                    currentValue === selectedPlace
+                                      ? ''
+                                      : currentValue
+                                  );
+                                  setPopoverOpen(false);
+                                }}
+                              >
+                                {loc.label}
+                                <Check
+                                  className={cn(
+                                    'ml-auto h-4 w-4',
+                                    selectedPlace === loc.value
+                                      ? 'opacity-100'
+                                      : 'opacity-0'
+                                  )}
+                                />
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    aria-label="Add new place"
+                    onClick={() => router.push('/create/place')}
+                  >
+                    <Plus size={16} />
+                  </Button>
+                </div>
                 <input type="hidden" name="place" value={selectedPlace} />
               </div>
 
@@ -277,12 +305,27 @@ export default function CreatePostPage() {
               <Label htmlFor="caption" className="text-md leading-tight">
                 Caption
               </Label>
-              <Textarea
-                id="caption"
-                name="caption"
-                placeholder="Write about your experience here..."
-                rows={4}
-              />
+              <InputGroup>
+                <InputGroupTextarea
+                  id="caption"
+                  name="caption"
+                  placeholder="Write about your experience here..."
+                  rows={4}
+                  value={caption}
+                  onChange={handleChange}
+                />
+                <InputGroupAddon align="block-end">
+                  <InputGroupText
+                    className={`text-xs ${
+                      caption.length === MAX_CHAR
+                        ? 'text-red-500'
+                        : 'text-muted-foreground'
+                    }`}
+                  >
+                    {caption.length}/{MAX_CHAR}
+                  </InputGroupText>
+                </InputGroupAddon>
+              </InputGroup>
             </div>
 
             <div className="flex flex-col gap-2">
@@ -339,18 +382,12 @@ export default function CreatePostPage() {
               </FileUpload>
             </div>
 
-            <div className="xs:flex-row mt-1 flex flex-col justify-end gap-2">
-              <Button
-                variant="outline"
-                type="button"
-                onClick={() => router.back()}
-                className="flex-1"
-              >
-                Cancel
-              </Button>
-              <Button type="submit" className="flex-1">
-                Post
-              </Button>
+            <div className="fixed bottom-0 left-0 z-60 flex w-dvw justify-center">
+              <div className="bg-background border-border relative flex w-full max-w-xl justify-between gap-2 rounded-t-xl border-x border-t px-3 pt-3 pb-6 shadow-xs">
+                <Button type="submit" className="flex-1">
+                  Post
+                </Button>
+              </div>
             </div>
           </form>
         </div>

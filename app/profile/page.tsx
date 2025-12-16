@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 
 import { ArrowLeft, Settings } from 'lucide-react';
 
+import NavigationBar from '@/components/NavigationBar';
 import PostItem from '@/components/PostItem';
 import TopBar from '@/components/TopBar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -119,6 +120,7 @@ export default function ProfilePage() {
           </div>
         </div>
       </main>
+      <NavigationBar />
     </>
   );
 }

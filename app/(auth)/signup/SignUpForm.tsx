@@ -32,10 +32,9 @@ export const formSchema = z
 
     password: z
       .string()
-      .max(72, { message: 'Password cannot exceed 72 characters.' })
+      .max(100, { message: 'Password cannot exceed 100 characters.' })
       .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/, {
-        message:
-          'Password must be at least 8 characters and include upper, lower, number and symbol.',
+        message: 'At least 8 characters with upper, lower, number, and symbol.',
       }),
 
     passwordConfirmation: z
@@ -123,6 +122,7 @@ export default function SignUpForm() {
             placeholder="Full name"
             {...register('fullName')}
             aria-label="Full name"
+            className={errors.fullName ? 'border-destructive' : ''}
           />
           {errors.fullName && (
             <span className="text-destructive text-sm">
@@ -138,6 +138,7 @@ export default function SignUpForm() {
             placeholder="Username"
             {...register('username')}
             aria-label="Username"
+            className={errors.username ? 'border-destructive' : ''}
           />
           {errors.username && (
             <span className="text-destructive text-sm">
@@ -153,6 +154,7 @@ export default function SignUpForm() {
             placeholder="Email"
             {...register('email')}
             aria-label="Email"
+            className={errors.email ? 'border-destructive' : ''}
           />
           {errors.email && (
             <span className="text-destructive text-sm">
@@ -168,6 +170,7 @@ export default function SignUpForm() {
             placeholder="Password"
             {...register('password')}
             aria-label="Password"
+            className={errors.password ? 'border-destructive' : ''}
           />
           {errors.password && (
             <span className="text-destructive text-sm">
@@ -183,6 +186,7 @@ export default function SignUpForm() {
             placeholder="Confirm password"
             {...register('passwordConfirmation')}
             aria-label="Password confirmation"
+            className={errors.passwordConfirmation ? 'border-destructive' : ''}
           />
           {errors.passwordConfirmation && (
             <span className="text-destructive text-sm">
@@ -190,20 +194,20 @@ export default function SignUpForm() {
             </span>
           )}
         </div>
-      </div>
 
-      <div className="flex items-center gap-2">
-        <Checkbox
-          id="show-password"
-          checked={showPassword}
-          onCheckedChange={(checked) => setShowPassword(!!checked)}
-        />
-        <label
-          htmlFor="show-password"
-          className="text-secondary-foreground font-normal"
-        >
-          Show password
-        </label>
+        <div className="flex items-center gap-2">
+          <Checkbox
+            id="show-password"
+            checked={showPassword}
+            onCheckedChange={(checked) => setShowPassword(!!checked)}
+          />
+          <label
+            htmlFor="show-password"
+            className="text-secondary-foreground text-sm font-normal"
+          >
+            Show password
+          </label>
+        </div>
       </div>
 
       <div className="flex flex-col gap-1">

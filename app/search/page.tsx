@@ -9,6 +9,7 @@ import { useSearchParams } from 'next/navigation';
 import { Search } from 'lucide-react';
 
 import AccountItem from '@/components/AccountItem';
+import NavigationBar from '@/components/NavigationBar';
 import PlaceItem from '@/components/PlaceItem';
 import PostItem from '@/components/PostItem';
 import TopBar from '@/components/TopBar';
@@ -103,7 +104,7 @@ export default function SearchPage() {
           </div>
         </main>
       )}
-      ;
+      <NavigationBar />
     </>
   );
 }

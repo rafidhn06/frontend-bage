@@ -1,187 +1,393 @@
 'use client';
 
-import { ChangeEvent, useState } from 'react';
+import { ChangeEvent, useCallback, useRef, useState } from 'react';
+import Cropper, { Area } from 'react-easy-crop';
 import { useForm } from 'react-hook-form';
 
-import Image from 'next/image';
+import NextImage from 'next/image';
 import { useRouter } from 'next/navigation';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, RefreshCw } from 'lucide-react';
 import * as z from 'zod';
 
 import TopBar from '@/components/TopBar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+  InputGroupText,
+  InputGroupTextarea,
+} from '@/components/ui/input-group';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { Slider } from '@/components/ui/slider';
 
-// Schema Zod
+const userProfile = {
+  fullName: 'John Doe',
+  username: '@johndoe',
+  bio: 'Just an ordinary family man. Sometimes a doctor.',
+  avatarUrl: 'https://github.com/shadcn.png',
+  userInitials: 'JD',
+};
+
 const profileSchema = z.object({
+  fullName: z.string().max(100, 'Name cannot exceed 100 characters.'),
   username: z
     .string()
-    .max(50, { message: 'Username cannot exceed 50 characters.' })
-    .regex(/^\S*$/, { message: 'Username cannot contain spaces.' })
+    .max(50, 'Username cannot exceed 50 characters.')
+    .regex(/^\S*$/, 'Username cannot contain spaces.')
     .optional()
     .or(z.literal('')),
-  bio: z
-    .string()
-    .max(150, { message: 'Bio cannot exceed 150 characters.' })
-    .optional()
-    .or(z.literal('')),
+  bio: z.string().max(150, 'Bio cannot exceed 150 characters.').optional(),
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
 
+const createImage = (url: string): Promise<HTMLImageElement> =>
+  new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.crossOrigin = 'anonymous';
+    img.src = url;
+  });
+
+const getCroppedImg = async (
+  imageSrc: string,
+  croppedAreaPixels: Area
+): Promise<string> => {
+  const image = await createImage(imageSrc);
+  const canvas = document.createElement('canvas');
+
+  canvas.width = croppedAreaPixels.width;
+  canvas.height = croppedAreaPixels.height;
+
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return '';
+
+  ctx.drawImage(
+    image,
+    croppedAreaPixels.x,
+    croppedAreaPixels.y,
+    croppedAreaPixels.width,
+    croppedAreaPixels.height,
+    0,
+    0,
+    croppedAreaPixels.width,
+    croppedAreaPixels.height
+  );
+
+  return new Promise((resolve) => {
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      resolve(URL.createObjectURL(blob));
+    }, 'image/jpeg');
+  });
+};
+
 export default function ProfileSettingsPage() {
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [croppedImage, setCroppedImage] = useState<string | null>(null);
+  const [isCropping, setIsCropping] = useState(false);
 
-  // Initial values
-  const [username, setUsername] = useState('johndoe');
-  const [bio, setBio] = useState(
-    'Just an ordinary family man. Sometimes a doctor.'
-  );
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
 
-  // React Hook Form
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      username,
-      bio,
+      fullName: userProfile.fullName,
+      username: userProfile.username.replace('@', ''),
+      bio: userProfile.bio,
     },
     mode: 'onChange',
   });
+
+  const fullNameValue = watch('fullName') || '';
+  const usernameValue = watch('username') || '';
+  const bioValue = watch('bio') || '';
+
+  const MAX_FULLNAME = 100;
+  const MAX_USERNAME = 50;
+  const MAX_BIO = 150;
+
+  const resetFileInput = () => {
+    setSelectedFile(null);
+    setIsCropping(false);
+    setCrop({ x: 0, y: 0 });
+    setZoom(1);
+    setCroppedAreaPixels(null);
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!['image/png', 'image/jpg', 'image/jpeg'].includes(file.type)) {
+    if (!['image/png', 'image/jpeg', 'image/jpg'].includes(file.type)) {
       alert('Only PNG, JPG, or JPEG files are allowed.');
+      resetFileInput();
       return;
     }
 
     if (file.size > 2 * 1024 * 1024) {
       alert('File size must be less than 2MB.');
+      resetFileInput();
       return;
     }
 
     setSelectedFile(file);
-    setCroppedImage(null);
+    setIsCropping(true);
   };
 
-  const handleReset = () => {
-    setSelectedFile(null);
+  const onCropComplete = useCallback(
+    (_: Area, pixels: Area) => setCroppedAreaPixels(pixels),
+    []
+  );
+
+  const handleCropSave = async () => {
+    if (!selectedFile || !croppedAreaPixels) return;
+
+    const croppedUrl = await getCroppedImg(
+      URL.createObjectURL(selectedFile),
+      croppedAreaPixels
+    );
+
+    setCroppedImage(croppedUrl);
+    resetFileInput();
+  };
+
+  const handleResetImage = () => {
     setCroppedImage(null);
+    resetFileInput();
   };
 
   const onSubmit = (data: ProfileFormValues) => {
     console.log({
-      username: data.username,
-      bio: data.bio,
+      ...data,
       profileImage: croppedImage,
     });
+
     alert('Profile updated!');
-    setUsername(data.username || '');
-    setBio(data.bio || '');
   };
 
   return (
     <>
-      <TopBar className="flex w-full items-center gap-3 px-4 py-4 text-xl font-semibold">
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label="Go back"
-          onClick={() => router.back()}
-        >
+      <TopBar className="flex items-center gap-3 px-4 py-4 text-xl font-semibold">
+        <Button variant="ghost" size="icon" onClick={() => router.back()}>
           <ArrowLeft size={20} />
         </Button>
-        <span>Profile Settings</span>
+        Profile Settings
       </TopBar>
 
-      <main className="mx-auto flex w-full max-w-xl flex-col gap-4 px-4 py-6 pb-[78px]">
-        {/* Profile Picture */}
-        <div className="flex flex-col gap-2">
+      <main className="mx-auto w-full max-w-xl pb-[78px]">
+        <div className="flex flex-col gap-4 px-4 py-6">
           <div className="flex flex-col gap-2">
             <Label
-              htmlFor="profilePicture"
-              className="text-md flex gap-1 leading-tight"
+              className="text-md mx-auto leading-tight"
+              htmlFor="profile-picture"
             >
               Profile Picture
             </Label>
-            <Input
-              id="profilePicture"
-              accept="image/png, image/jpg, image/jpeg"
+            <Avatar className="mx-auto my-2 size-20">
+              {croppedImage ? (
+                <AvatarImage asChild>
+                  <NextImage
+                    src={croppedImage}
+                    alt="Profile"
+                    width={80}
+                    height={80}
+                  />
+                </AvatarImage>
+              ) : (
+                <>
+                  <AvatarImage asChild>
+                    <NextImage
+                      src={userProfile.avatarUrl}
+                      alt={userProfile.fullName}
+                      width={80}
+                      height={80}
+                    />
+                  </AvatarImage>
+                  <AvatarFallback>{userProfile.userInitials}</AvatarFallback>
+                </>
+              )}
+            </Avatar>
+
+            {croppedImage && (
+              <Button
+                size="icon-sm"
+                variant="ghost"
+                onClick={handleResetImage}
+                className="mx-auto w-fit p-2"
+              >
+                <RefreshCw />
+              </Button>
+            )}
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => fileInputRef.current?.click()}
+              className="mx-auto w-fit"
+              id="profile-picture"
+            >
+              Change picture
+            </Button>
+
+            <input
+              ref={fileInputRef}
               type="file"
+              accept="image/png, image/jpeg, image/jpg"
+              className="hidden"
               onChange={handleFileChange}
             />
           </div>
 
-          {selectedFile && !croppedImage && (
-            <span>Preview / Crop here (not implemented)</span>
-          )}
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="full-name">Full name</Label>
+            <InputGroup>
+              <InputGroupInput
+                id="full-name"
+                {...register('fullName')}
+                maxLength={MAX_FULLNAME}
+              />
+              <InputGroupAddon align="inline-end">
+                <InputGroupText className="text-muted-foreground text-xs">
+                  {fullNameValue.length}/{MAX_FULLNAME}
+                </InputGroupText>
+              </InputGroupAddon>
+            </InputGroup>
+            {errors.fullName && (
+              <p className="text-destructive text-sm">
+                {errors.fullName.message}
+              </p>
+            )}
+          </div>
 
-          {croppedImage && <span>Preview / Crop here (not implemented)</span>}
-        </div>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="username">Username</Label>
+            <InputGroup>
+              <InputGroupInput
+                id="username"
+                {...register('username')}
+                maxLength={MAX_USERNAME}
+              />
+              <InputGroupAddon align="inline-end">
+                <InputGroupText className="text-muted-foreground text-xs">
+                  {usernameValue.length}/{MAX_USERNAME}
+                </InputGroupText>
+              </InputGroupAddon>
+            </InputGroup>
+            {errors.username && (
+              <p className="text-destructive text-sm">
+                {errors.username.message}
+              </p>
+            )}
+          </div>
 
-        {/* Username */}
-        <div className="flex flex-col gap-2">
-          <Label
-            htmlFor="username"
-            className="text-md flex gap-1 leading-tight"
-          >
-            Username
-          </Label>
-          <Input
-            id="username"
-            {...register('username')}
-            className={errors.username ? 'border-destructive' : ''}
-          />
-          {errors.username && (
-            <span className="text-destructive text-sm">
-              {errors.username.message}
-            </span>
-          )}
-        </div>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="bio">Bio</Label>
+            <InputGroup>
+              <InputGroupTextarea
+                id="bio"
+                rows={4}
+                {...register('bio')}
+                maxLength={MAX_BIO}
+              ></InputGroupTextarea>
+              <InputGroupAddon align="block-end">
+                <InputGroupText className="text-muted-foreground text-xs">
+                  {bioValue.length}/{MAX_BIO}
+                </InputGroupText>
+              </InputGroupAddon>
+            </InputGroup>
+            {errors.bio && (
+              <p className="text-destructive text-sm">{errors.bio.message}</p>
+            )}
+          </div>
 
-        {/* Bio */}
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="bio" className="text-md flex gap-1 leading-tight">
-            Bio
-          </Label>
-          <Textarea
-            id="bio"
-            {...register('bio')}
-            className={errors.bio ? 'border-destructive' : ''}
-          />
-          {errors.bio && (
-            <span className="text-destructive text-sm">
-              {errors.bio.message}
-            </span>
-          )}
-        </div>
-
-        <div className="fixed bottom-0 left-0 z-60 flex w-dvw justify-center">
-          <div className="bg-background border-border relative flex w-full max-w-xl justify-between gap-2 rounded-t-xl border-x border-t px-3 pt-3 pb-6 shadow-xs">
-            <Button
-              type="submit"
-              className="flex-1"
-              onClick={handleSubmit(onSubmit)}
-              disabled={isSubmitting}
-            >
-              Save changes
-            </Button>
+          <div className="fixed bottom-0 left-0 z-60 flex w-dvw justify-center">
+            <div className="bg-background border-border relative flex w-full max-w-xl justify-between gap-2 rounded-t-xl border-x border-t px-3 pt-3 pb-6 shadow-xs">
+              <Button
+                className="w-full"
+                onClick={handleSubmit(onSubmit)}
+                disabled={isSubmitting}
+              >
+                Save changes
+              </Button>
+            </div>
           </div>
         </div>
       </main>
+
+      <Dialog
+        open={isCropping}
+        onOpenChange={(open) => !open && resetFileInput()}
+      >
+        <DialogContent className="xs:h-auto flex h-full max-w-xl flex-col justify-between gap-5 [&>button:last-child]:hidden">
+          <div className="flex items-center gap-1">
+            <DialogClose asChild>
+              <Button variant="ghost" size="icon">
+                <ArrowLeft size={20} />
+              </Button>
+            </DialogClose>
+            <DialogHeader className="flex-1">
+              <DialogTitle>Crop Image</DialogTitle>
+            </DialogHeader>
+            <Button onClick={handleCropSave}>Save</Button>
+          </div>
+
+          <div className="bg-muted relative h-60">
+            {selectedFile && (
+              <Cropper
+                image={URL.createObjectURL(selectedFile)}
+                crop={crop}
+                zoom={zoom}
+                aspect={1}
+                cropShape="round"
+                showGrid={false}
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
+                onCropComplete={onCropComplete}
+              />
+            )}
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <span>Zoom</span>
+              <Slider
+                min={1}
+                max={3}
+                step={0.01}
+                value={[zoom]}
+                onValueChange={([z]) => setZoom(z)}
+              />
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

@@ -1,12 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import PostService from '@/services/PostService';
 
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-import { Star, X } from 'lucide-react';
+import { SendHorizontalIcon, Star, X } from 'lucide-react';
 import { ArrowLeft } from 'lucide-react';
 
 import NavigationBar from '@/components/NavigationBar';
@@ -26,6 +28,8 @@ import { Textarea } from '@/components/ui/textarea';
 
 function PostDetail() {
   const router = useRouter();
+  const search = useSearchParams();
+  const postId = search.get('id')
 
   const stopPropagation = (e: React.MouseEvent<HTMLElement>) => {
     e.stopPropagation();
@@ -83,6 +87,24 @@ function PostDetail() {
   const [open, setOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [liked, setLiked] = useState(false);
+  const [postData, setPostData] = useState<any | null>(null)
+
+  useEffect(() => {
+    let mounted = true
+    const load = async () => {
+      if (!postId) return
+      try {
+        const res = await PostService.get(Number(postId))
+        if (!mounted) return
+        // API wraps response, try common shapes
+        setPostData(res.data ?? res)
+      } catch (e) {
+        // ignore: keep mock
+      }
+    }
+    load()
+    return () => { mounted = false }
+  }, [postId])
 
   const openModalAndStopPropagation = (
     e: React.MouseEvent<HTMLButtonElement>,
@@ -110,9 +132,9 @@ function PostDetail() {
   }, [open]);
 
   const mockPostData = {
-    likes: 62,
-    isLiked: liked,
-    replies: 1283,
+    likes: postData?.likes_count ?? 62,
+    isLiked: postData?.is_liked ?? liked,
+    replies: postData?.comments_count ?? 1283,
   };
 
   return (
@@ -171,7 +193,7 @@ function PostDetail() {
         ))}
       </div>
 
-      <span className="text-sm">Lorem ipsum dolor sit amet consectur</span>
+  <span className="text-sm">{postData?.content ?? 'Lorem ipsum dolor sit amet consectur'}</span>
 
       <div className="has-[button:focus-visible]:ring-ring/50 grid aspect-[16/9] grid-cols-2 grid-rows-2 gap-1 overflow-hidden rounded-xl transition-colors select-none has-[button:focus-visible]:ring-3">
         {images.map((src, i) => (
@@ -284,16 +306,22 @@ function CommentInput() {
       </Avatar>
 
       <form onSubmit={handleSubmit} className="flex flex-1 flex-col">
-        <Textarea
-          placeholder="Post your reply"
-          value={commentText}
-          onChange={(e) => setCommentText(e.target.value)}
-          className="min-h-[60px]"
-        />
-
-        <div className="flex justify-end pt-4">
-          <Button type="submit" size="sm" disabled={isButtonDisabled}>
-            Reply
+        <div className="relative">
+          <Textarea
+            placeholder="Post your reply"
+            value={commentText}
+            onChange={(e) => setCommentText(e.target.value)}
+            className="min-h-[60px] pr-9"
+          />
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            className="text-muted-foreground hover:bg-accent focus-visible:ring-ring/50 absolute right-0 bottom-0 mx-2 my-1 rounded-lg"
+            type="submit"
+            disabled={isButtonDisabled}
+          >
+            <SendHorizontalIcon />
+            <span className="sr-only">Post your reply</span>
           </Button>
         </div>
       </form>
@@ -448,7 +476,7 @@ export default function PostPage() {
 
   return (
     <>
-      <TopBar className="text-md flex w-full items-center gap-3 truncate px-4 py-3 font-semibold tracking-tight">
+      <TopBar className="flex w-full items-center gap-3 p-4 text-xl font-semibold">
         <Button
           variant="ghost"
           size="icon"
@@ -457,7 +485,7 @@ export default function PostPage() {
         >
           <ArrowLeft size={20} />
         </Button>
-        <div>Post</div>
+        Post
       </TopBar>
 
       <main className="xs:pb-[78px] flex items-center justify-center pb-[81px]">

@@ -1,6 +1,13 @@
 'use client';
 
-import { MapContainer, Marker, TileLayer, useMapEvents } from 'react-leaflet';
+import { useEffect } from 'react';
+import {
+  MapContainer,
+  Marker,
+  TileLayer,
+  useMap,
+  useMapEvents,
+} from 'react-leaflet';
 
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -19,6 +26,28 @@ const markerIcon = new L.Icon({
   iconAnchor: [12, 41],
 });
 
+// Helper component: otomatis fly map ke posisi marker
+function FlyToPosition({
+  center,
+  position,
+}: {
+  center: [number, number];
+  position: [number, number] | null;
+}) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (position) {
+      map.flyTo(position, map.getZoom(), { animate: true, duration: 1 });
+    } else {
+      map.flyTo(center, map.getZoom(), { animate: true, duration: 1 });
+    }
+  }, [position, center, map]);
+
+  return null;
+}
+
+// Tangkap klik map
 function LocationPicker({
   onSelect,
 }: {
@@ -55,6 +84,8 @@ export default function PlaceMap({
         attribution="&copy; OpenStreetMap contributors"
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
+
+      <FlyToPosition center={center} position={position} />
 
       <LocationPicker onSelect={onSelect} />
 

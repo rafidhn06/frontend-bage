@@ -44,8 +44,6 @@ import {
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 
-// untuk helper classnames
-
 const MAX_NAME = 100;
 const MAX_ADDRESS = 150;
 const MAX_DESC = 150;
@@ -53,7 +51,6 @@ const MAX_DESC = 150;
 const JAKARTA_CENTER: [number, number] = [-6.2, 106.816666];
 const PlaceMap = dynamic(() => import('@/components/PlaceMap'), { ssr: false });
 
-// Kategori
 const categories = [
   { name: 'Kafe', icon: 'coffee' },
   { name: 'Restoran', icon: 'utensils' },
@@ -64,7 +61,6 @@ const categories = [
   { name: 'Lainnya', icon: 'ellipsis' },
 ];
 
-// Helper untuk icon lucide-react
 const categoryIconMap: Record<
   string,
   React.FC<React.SVGProps<SVGSVGElement>>
@@ -88,8 +84,11 @@ export default function CreatePlacePage() {
   const [mapCenter, setMapCenter] = useState<[number, number]>(JAKARTA_CENTER);
   const [position, setPosition] = useState<[number, number] | null>(null);
 
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [selectedCategory, setSelectedCategory] = useState('');
   const [categoryPopoverOpen, setCategoryPopoverOpen] = useState(false);
+
+  const [locationPermissionResolved, setLocationPermissionResolved] =
+    useState(false);
 
   useEffect(() => {
     const getLocationFromIP = async () => {
@@ -106,6 +105,8 @@ export default function CreatePlacePage() {
         }
       } catch (error) {
         console.error('IP location failed', error);
+      } finally {
+        setLocationPermissionResolved(true);
       }
     };
 
@@ -118,8 +119,10 @@ export default function CreatePlacePage() {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           const { latitude, longitude } = pos.coords;
+
           setMapCenter([latitude, longitude]);
           setPosition([latitude, longitude]);
+          setLocationPermissionResolved(true);
         },
         () => {
           getLocationFromIP();
@@ -233,7 +236,6 @@ export default function CreatePlacePage() {
                       <div className="flex items-center gap-2 text-base font-normal md:text-sm">
                         {selectedCategory ? (
                           <>
-                            {/* Langsung render JSX */}
                             {(() => {
                               const IconComponent =
                                 categoryIconMap[
@@ -241,7 +243,7 @@ export default function CreatePlacePage() {
                                     (c) => c.name === selectedCategory
                                   )!.icon
                                 ];
-                              return <IconComponent size={16} />;
+                              return <IconComponent className="size-4" />;
                             })()}
                             <span>{selectedCategory}</span>
                           </>
@@ -273,7 +275,7 @@ export default function CreatePlacePage() {
                                 }}
                               >
                                 <div className="flex items-center gap-2">
-                                  <IconComponent size={16} />
+                                  <IconComponent className="size-4" />
                                   {cat.name}
                                 </div>
                                 <Check
@@ -295,7 +297,6 @@ export default function CreatePlacePage() {
               </div>
             </div>
 
-            {/* Address */}
             <div className="flex flex-col gap-2">
               <Label
                 className="text-md flex gap-1 leading-tight"
@@ -306,7 +307,7 @@ export default function CreatePlacePage() {
               <InputGroup>
                 <InputGroupTextarea
                   id="address"
-                  rows={3}
+                  rows={4}
                   placeholder="Enter full address..."
                   value={address}
                   onChange={(e) =>
@@ -322,9 +323,6 @@ export default function CreatePlacePage() {
               </InputGroup>
             </div>
 
-            {/* Category Selector */}
-
-            {/* Map */}
             <div className="flex flex-col gap-2">
               <Label className="text-md flex gap-1 leading-tight">
                 Pin Location<span className="text-red-500">*</span>
@@ -332,7 +330,7 @@ export default function CreatePlacePage() {
               <div className="h-[300px] overflow-hidden rounded-md border">
                 <PlaceMap
                   center={mapCenter}
-                  position={position}
+                  position={locationPermissionResolved ? position : null}
                   onSelect={(lat, lng) => setPosition([lat, lng])}
                 />
               </div>
@@ -340,14 +338,12 @@ export default function CreatePlacePage() {
                 Location:
                 {position && (
                   <>
-                    {' '}
                     {position[0].toFixed(5)}, {position[1].toFixed(5)}
                   </>
                 )}
               </span>
             </div>
 
-            {/* Description */}
             <div className="flex flex-col gap-2">
               <Label className="text-md leading-tight" htmlFor="description">
                 Description
@@ -371,7 +367,6 @@ export default function CreatePlacePage() {
               </InputGroup>
             </div>
 
-            {/* Submit Button */}
             <div className="fixed bottom-0 left-0 z-9999 flex w-dvw justify-center">
               <div className="bg-background border-border relative flex w-full max-w-xl justify-between gap-2 rounded-t-xl border-x border-t px-3 pt-3 pb-6 shadow-xs">
                 <Button type="submit" className="flex-1">

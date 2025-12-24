@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 
-import { ArrowLeft, Star } from 'lucide-react';
+import { ArrowLeft, Coffee, MapPin, Star } from 'lucide-react';
 
 import NavigationBar from '@/components/NavigationBar';
 import PostItem from '@/components/PostItem';
@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 const placeProfile = {
   name: 'Kopi Kenangan Senja',
   address: 'Jl. Pegangsaan Timur No. 123, Jakarta Pusat',
-  categories: ['Coffee Shop', 'Working Space', 'Pet Friendly'],
+  categories: 'Coffee Shop',
   postCount: 57,
   description:
     'Kopi Kenangan Senja adalah tempat yang ideal untuk menikmati kopi sambil bekerja atau bersantai bersama teman-teman. Dengan suasana yang nyaman dan pemandangan yang asri, kami menyediakan berbagai pilihan kopi dan makanan ringan yang lezat.',
@@ -50,28 +50,34 @@ export default function PlaceProfilePage() {
       <main className="xs:pb-[78px] flex items-center justify-center pb-[81px]">
         <div className="divide-border flex max-w-xl flex-col divide-y divide-solid">
           <div className="flex flex-col gap-6 px-4 py-6">
-            <div className="flex flex-col gap-2">
-              <span className="text-xl font-bold">{name}</span>
+            <div className="flex flex-col gap-3">
+              <span className="text-xl leading-tight font-bold">{name}</span>
 
-              {categories.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  <span className="text-sm italic">
-                    {categories.join(', ')}
+              <div className="flex items-center gap-2">
+                <Star size={16} className="fill-yellow-300 text-yellow-300" />
+                <span className="text-muted-foreground text-sm">
+                  {averageRating.toFixed(1)} ({totalRatings} posts)
+                </span>
+              </div>
+
+              {categories && (
+                <div className="flex items-center gap-2">
+                  <Coffee className="text-muted-foreground" size={16} />
+                  <span className="text-muted-foreground text-sm leading-tight">
+                    {categories}
                   </span>
                 </div>
               )}
             </div>
 
-            {description && <span className="text-sm">{description}</span>}
+            {description && (
+              <span className="text-justify text-sm">{description}</span>
+            )}
 
-            <div className="flex items-center gap-1">
-              <Star size={16} className="fill-yellow-300 text-yellow-300" />
-              <span className="text-sm">
-                {averageRating.toFixed(1)} ({totalRatings} posts)
-              </span>
+            <div className="flex items-center gap-2">
+              <MapPin size={16} className="text-muted-foreground" />
+              <span className="text-sm">{address}</span>
             </div>
-
-            <span className="text-sm">{address}</span>
           </div>
 
           <div className="divide-border divide-y divide-solid">

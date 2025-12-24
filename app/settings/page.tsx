@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-import { ArrowLeft, Lock, Trash2, User } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Lock, Trash2, User } from 'lucide-react';
 
 import TopBar from '@/components/TopBar';
 import { Button } from '@/components/ui/button';
@@ -50,11 +50,11 @@ export default function SettingsPage() {
               <div className="flex flex-col">
                 <span className="font-semibold">Profile</span>
                 <span className="text-muted-foreground text-sm">
-                  Edit your bio, username, and profile picture
+                  Edit your and profile picture, username, full name, and bio
                 </span>
               </div>
             </div>
-            <span className="text-muted-foreground">&gt;</span>
+            <ChevronRight size={20} className="text-muted-foreground" />
           </Link>
 
           <Link
@@ -72,7 +72,7 @@ export default function SettingsPage() {
                 </span>
               </div>
             </div>
-            <span className="text-muted-foreground">&gt;</span>
+            <ChevronRight size={20} className="text-muted-foreground" />
           </Link>
 
           <Dialog>

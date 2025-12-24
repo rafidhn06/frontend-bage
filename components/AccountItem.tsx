@@ -46,21 +46,21 @@ export default function AccountItem() {
         <AvatarFallback>CN</AvatarFallback>
       </Avatar>
 
-      <div className="flex flex-grow flex-col gap-1">
+      <div className="flex min-w-0 flex-1 flex-grow flex-col gap-1">
         <div className="flex gap-1">
           <Link
             href="/profile"
-            className="flex hover:underline focus:underline focus:outline-none"
+            className="flex min-w-0 hover:underline focus:underline focus:outline-none"
           >
-            <span className="text-sm leading-tight font-semibold">
+            <span className="truncate text-sm leading-tight font-semibold">
               John Doe
             </span>
           </Link>
-          <span className="text-muted-foreground text-sm leading-tight">
+          <span className="text-muted-foreground flex-1 truncate text-sm leading-tight">
             @johndoe
           </span>
         </div>
-        <span className="text-left text-sm">
+        <span className="text-sm">
           Tortor posuere ac ut consequat semper viverra nam libero justo,
           laoreet sit amet cursus sit amet, dictum sit amet justo.
         </span>

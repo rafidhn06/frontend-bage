@@ -201,7 +201,7 @@ export default function CreatePostPage() {
                         variant="outline"
                         role="combobox"
                         aria-expanded={popoverOpen}
-                        className="flex-1 justify-between"
+                        className="min-w-0 flex-1 justify-between"
                       >
                         <div className="flex min-w-0 flex-1 items-center gap-2">
                           <MapPin className="text-muted-foreground" size={16} />
@@ -315,13 +315,7 @@ export default function CreatePostPage() {
                   onChange={handleChange}
                 />
                 <InputGroupAddon align="block-end">
-                  <InputGroupText
-                    className={`text-xs ${
-                      caption.length === MAX_CHAR
-                        ? 'text-red-500'
-                        : 'text-muted-foreground'
-                    }`}
-                  >
+                  <InputGroupText className="text-muted-foreground text-xs">
                     {caption.length}/{MAX_CHAR}
                   </InputGroupText>
                 </InputGroupAddon>

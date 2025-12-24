@@ -12,6 +12,7 @@ import * as z from 'zod';
 
 import TopBar from '@/components/TopBar';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
@@ -27,7 +28,7 @@ const accountSchema = z
       .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/, {
         message: 'At least 8 characters with upper, lower, number, and symbol.',
       })
-      .or(z.literal('')), // allow empty
+      .or(z.literal('')),
     confirmPassword: z.string().optional(),
   })
   .refine(
@@ -91,8 +92,7 @@ export default function AccountSettingsPage() {
           onSubmit={handleSubmit(onSubmit)}
           className="flex flex-col gap-6 px-4 py-6"
         >
-          {/* Account Info */}
-          <section className="border-border flex flex-col gap-4 border-b border-solid pb-6">
+          <section className="border-border flex flex-col gap-4 border-solid pb-6">
             <span className="text-xl leading-tight font-semibold md:text-lg">
               Account Info
             </span>
@@ -114,18 +114,20 @@ export default function AccountSettingsPage() {
             </div>
           </section>
 
-          {/* Change Password */}
           <section className="flex flex-col gap-4">
             <span className="text-xl leading-tight font-semibold md:text-lg">
               Change Password
             </span>
 
             <div className="flex flex-col gap-2">
-              <Label htmlFor="currentPassword" className="text-base md:text-sm">
+              <Label
+                htmlFor="current-password"
+                className="text-base md:text-sm"
+              >
                 Current Password
               </Label>
               <Input
-                id="currentPassword"
+                id="current-password"
                 type={showPassword ? 'text' : 'password'}
                 {...register('currentPassword')}
                 className={errors.currentPassword ? 'border-destructive' : ''}
@@ -138,11 +140,11 @@ export default function AccountSettingsPage() {
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label htmlFor="newPassword" className="text-base md:text-sm">
+              <Label htmlFor="new-password" className="text-base md:text-sm">
                 New Password
               </Label>
               <Input
-                id="newPassword"
+                id="new-password"
                 type={showPassword ? 'text' : 'password'}
                 {...register('newPassword')}
                 className={errors.newPassword ? 'border-destructive' : ''}
@@ -155,11 +157,14 @@ export default function AccountSettingsPage() {
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label htmlFor="confirmPassword" className="text-base md:text-sm">
+              <Label
+                htmlFor="confirm-password"
+                className="text-base md:text-sm"
+              >
                 Confirm New Password
               </Label>
               <Input
-                id="confirmPassword"
+                id="confirm-password"
                 type={showPassword ? 'text' : 'password'}
                 {...register('confirmPassword')}
                 className={errors.confirmPassword ? 'border-destructive' : ''}
@@ -172,14 +177,12 @@ export default function AccountSettingsPage() {
             </div>
 
             <div className="mt-2 flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="showPassword"
+              <Checkbox
+                id="show-password"
                 checked={showPassword}
-                onChange={(e) => setShowPassword(e.target.checked)}
-                className="checkbox"
+                onCheckedChange={(checked) => setShowPassword(!!checked)}
               />
-              <label htmlFor="showPassword" className="text-sm font-normal">
+              <label htmlFor="show-password" className="text-sm font-normal">
                 Show passwords
               </label>
               {responseError && (

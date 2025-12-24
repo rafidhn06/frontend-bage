@@ -5,8 +5,6 @@ import { Inter } from 'next/font/google';
 import 'leaflet/dist/leaflet.css';
 
 import './globals.css';
-import { AuthProvider } from '../contexts/AuthContext';
-import AuthGuard from '../components/AuthGuard';
 
 const roboto = Roboto({
   subsets: ['latin'],
@@ -35,9 +33,7 @@ export default function RootLayout({
       <body
         className={`${roboto.variable} ${inter.variable} font-sans antialiased`}
       >
-        <AuthProvider>
-          <AuthGuard>{children}</AuthGuard>
-        </AuthProvider>
+        {children}
       </body>
     </html>
   );

@@ -1,8 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
-import PostService from '@/services/PostService';
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -28,8 +26,6 @@ import { Textarea } from '@/components/ui/textarea';
 
 function PostDetail() {
   const router = useRouter();
-  const search = useSearchParams();
-  const postId = search.get('id')
 
   const stopPropagation = (e: React.MouseEvent<HTMLElement>) => {
     e.stopPropagation();
@@ -87,24 +83,6 @@ function PostDetail() {
   const [open, setOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [liked, setLiked] = useState(false);
-  const [postData, setPostData] = useState<any | null>(null)
-
-  useEffect(() => {
-    let mounted = true
-    const load = async () => {
-      if (!postId) return
-      try {
-        const res = await PostService.get(Number(postId))
-        if (!mounted) return
-        // API wraps response, try common shapes
-        setPostData(res.data ?? res)
-      } catch (e) {
-        // ignore: keep mock
-      }
-    }
-    load()
-    return () => { mounted = false }
-  }, [postId])
 
   const openModalAndStopPropagation = (
     e: React.MouseEvent<HTMLButtonElement>,
@@ -132,9 +110,9 @@ function PostDetail() {
   }, [open]);
 
   const mockPostData = {
-    likes: postData?.likes_count ?? 62,
-    isLiked: postData?.is_liked ?? liked,
-    replies: postData?.comments_count ?? 1283,
+    likes: 62,
+    isLiked: liked,
+    replies: 1283,
   };
 
   return (
@@ -193,7 +171,7 @@ function PostDetail() {
         ))}
       </div>
 
-  <span className="text-sm">{postData?.content ?? 'Lorem ipsum dolor sit amet consectur'}</span>
+      <span className="text-sm">Lorem ipsum dolor sit amet consectur</span>
 
       <div className="has-[button:focus-visible]:ring-ring/50 grid aspect-[16/9] grid-cols-2 grid-rows-2 gap-1 overflow-hidden rounded-xl transition-colors select-none has-[button:focus-visible]:ring-3">
         {images.map((src, i) => (

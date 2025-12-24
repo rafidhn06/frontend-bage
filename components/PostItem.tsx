@@ -20,7 +20,7 @@ import {
 
 import PostAction from './PostAction';
 
-export default function PostItem({ post }: { post?: any }) {
+export default function PostItem() {
   const router = useRouter();
 
   const handlePostClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -50,10 +50,12 @@ export default function PostItem({ post }: { post?: any }) {
     };
   }, [api]);
 
-  const images: string[] =
-    post?.media?.length > 0
-      ? post.media
-      : ['/picsum_random_1.jpg', '/picsum_random_2.jpg', '/picsum_random_3.jpg', '/picsum_random_4.jpg'];
+  const images: string[] = [
+    '/picsum_random_1.jpg',
+    '/picsum_random_2.jpg',
+    '/picsum_random_3.jpg',
+    '/picsum_random_4.jpg',
+  ];
 
   const imagesCount = images.length;
 
@@ -109,9 +111,9 @@ export default function PostItem({ post }: { post?: any }) {
   }, [open]);
 
   const mockPostData = {
-    likes: post?.likes_count ?? 62,
-    isLiked: post?.is_liked ?? liked,
-    replies: post?.comments_count ?? 1283,
+    likes: 62,
+    isLiked: liked,
+    replies: 1283,
   };
 
   return (
@@ -147,32 +149,22 @@ export default function PostItem({ post }: { post?: any }) {
                 onClick={stopPropagation}
                 className="truncate text-sm font-semibold hover:underline focus:underline focus:outline-none"
               >
-                {post?.user?.name ?? 'John Doe'}
+                John Doe
               </Link>
               <span className="text-muted-foreground flex-1 truncate text-sm">
-                @{post?.user?.username ?? 'johndoe'}
+                @johndoe
               </span>
             </div>
             <span className="text-muted-foreground text-sm">23s</span>
           </div>
 
-          {post?.location?.name ? (
-            <Link
-              href="/place"
-              onClick={stopPropagation}
-              className="w-fit text-sm hover:underline focus:underline focus:outline-none"
-            >
-              {post.location.name}
-            </Link>
-          ) : (
-            <Link
-              href="/place"
-              onClick={stopPropagation}
-              className="w-fit text-sm hover:underline focus:underline focus:outline-none"
-            >
-              Kebun Raya Bogor
-            </Link>
-          )}
+          <Link
+            href="/place"
+            onClick={stopPropagation}
+            className="w-fit text-sm hover:underline focus:underline focus:outline-none"
+          >
+            Kebun Raya Bogor
+          </Link>
         </div>
       </div>
       <div className="flex gap-2">
@@ -181,7 +173,7 @@ export default function PostItem({ post }: { post?: any }) {
         ))}
       </div>
 
-  <span className="text-sm">{post?.content ?? 'Lorem ipsum dolor sit amet consectur'}</span>
+      <span className="text-sm">Lorem ipsum dolor sit amet consectur</span>
 
       <div className="has-[button:focus-visible]:ring-ring/50 grid aspect-[16/9] grid-cols-2 grid-rows-2 gap-1 overflow-hidden rounded-xl transition-colors select-none has-[button:focus-visible]:ring-3">
         {images.map((src, i) => (

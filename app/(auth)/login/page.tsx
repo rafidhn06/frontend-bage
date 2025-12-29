@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 export default function LoginPage() {
   return (
     <AuthForm
-      title="Selamat Datang"
+      title="Selamat datang"
       description="Masuk untuk melanjutkan"
       form={<LoginForm />}
       linkText="Belum punya akun?"

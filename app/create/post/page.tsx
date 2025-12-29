@@ -105,16 +105,16 @@ export default function CreatePostPage() {
   const onFileValidate = useCallback(
     (file: File): string | null => {
       if (files.length >= MAX_FILES) {
-        return `You can only upload up to ${MAX_FILES} files`;
+        return `Anda hanya dapat mengunggah maksimal ${MAX_FILES} file`;
       }
 
       const allowedTypes = ['image/png', 'image/jpg', 'image/jpeg'];
       if (!allowedTypes.includes(file.type)) {
-        return 'Only PNG, JPG, or JPEG image files are allowed';
+        return 'Hanya file gambar PNG, JPG, atau JPEG yang diperbolehkan';
       }
 
       if (file.size > MAX_FILE_SIZE_BYTES) {
-        return `Maximum file size is ${MAX_FILE_SIZE_MEGABYTES} MB per file`;
+        return `Ukuran file maksimal adalah ${MAX_FILE_SIZE_MEGABYTES} MB per file`;
       }
 
       return null;
@@ -175,7 +175,7 @@ export default function CreatePostPage() {
         const res = await api.get('/locations', { params });
         setPlaces(res.data.data);
       } catch (error) {
-        toast.error('Failed to fetch places');
+        toast.error('Gagal memuat daftar lokasi');
       }
     };
 
@@ -186,9 +186,9 @@ export default function CreatePostPage() {
     return () => clearTimeout(debounceTimer);
   }, [searchQuery, userLocation]);
 
-  const onFileReject = useCallback((file: File, message: string) => {
-    toast.error(message, {
-      description: `"${file.name.length > 20 ? `${file.name.slice(0, 20)}...` : file.name}" has been rejected`,
+  const onFileReject = useCallback((file: File) => {
+    toast.error('Gagal membuat unggahan', {
+      description: `"${file.name.length > 20 ? `${file.name.slice(0, 20)}...` : file.name}" telah ditolak karena melebihi batas jumlah file`,
     });
   }, []);
 
@@ -196,15 +196,15 @@ export default function CreatePostPage() {
     e.preventDefault();
 
     if (!selectedPlace) {
-      toast.error('Post failed', {
-        description: 'Please pin a place for your post',
+      toast.error('Gagal membuat unggahan', {
+        description: 'Mohon pilih tempat untuk unggahan Anda',
       });
       return;
     }
 
     if (rating === 0) {
-      toast.error('Post failed', {
-        description: 'Please provide a rating (1-5 stars)',
+      toast.error('Gagal membuat unggahan', {
+        description: 'Mohon berikan penilaian (1-5 bintang)',
       });
       return;
     }
@@ -229,17 +229,20 @@ export default function CreatePostPage() {
         },
       });
 
-      toast.success('Post successful', {
-        description: 'Your experience has been successfully shared!',
+      toast.success('Berhasil membuat unggahan', {
+        description: 'Pengalaman Anda berhasil dibagikan!',
       });
 
       setRating(0);
       setSelectedPlace(null);
       setFiles([]);
       router.back();
-    } catch (error) {
-      toast.error('Post failed', {
-        description: 'Something went wrong. Please try again later',
+    } catch (error: any) {
+      const message =
+        error.response?.data?.message ||
+        'Terjadi kesalahan. Silakan coba lagi nanti';
+      toast.error('Gagal membuat unggahan', {
+        description: message,
       });
     } finally {
       setLoading(false);
@@ -268,7 +271,7 @@ export default function CreatePostPage() {
         >
           <ArrowLeft size={20} />
         </Button>
-        Create Post
+        Buat Unggahan
       </TopBar>
       <main className="flex flex-col items-center pb-[73px]">
         <div className="w-full max-w-xl">
@@ -281,7 +284,7 @@ export default function CreatePostPage() {
                 htmlFor="place"
                 className="text-md flex gap-1 leading-tight"
               >
-                Place<span className="text-red-500">*</span>
+                Tempat<span className="text-red-500">*</span>
               </Label>
               <div className="flex w-full gap-2">
                 <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
@@ -306,7 +309,7 @@ export default function CreatePostPage() {
                         ) : (
                           <>
                             <MapPin className="size-4" />
-                            <span>Select place...</span>
+                            <span>Pilih tempat...</span>
                           </>
                         )}
                       </div>
@@ -320,12 +323,12 @@ export default function CreatePostPage() {
                   <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
                     <Command shouldFilter={false}>
                       <CommandInput
-                        placeholder="Search place..."
+                        placeholder="Cari tempat..."
                         value={searchQuery}
                         onValueChange={setSearchQuery}
                       />
                       <CommandList>
-                        <CommandEmpty>No place found.</CommandEmpty>
+                        <CommandEmpty>Tempat tidak ditemukan.</CommandEmpty>
                         <CommandGroup>
                           {places.map((place) => (
                             <CommandItem
@@ -390,7 +393,7 @@ export default function CreatePostPage() {
                 htmlFor="rating"
                 className="text-md flex gap-1 leading-tight"
               >
-                Rating <span className="text-red-500">*</span>
+                Penilaian <span className="text-red-500">*</span>
               </Label>
               <div className="flex items-center justify-center">
                 {[...Array(5)].map((_, index) => {
@@ -419,13 +422,13 @@ export default function CreatePostPage() {
 
             <div className="flex flex-col gap-2">
               <Label htmlFor="caption" className="text-md leading-tight">
-                Caption
+                Keterangan
               </Label>
               <InputGroup>
                 <InputGroupTextarea
                   id="caption"
                   name="caption"
-                  placeholder="Write about your experience here..."
+                  placeholder="Ceritakan pengalaman Anda di sini..."
                   rows={4}
                   value={caption}
                   onChange={handleChange}
@@ -439,7 +442,7 @@ export default function CreatePostPage() {
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label className="text-md leading-tight font-medium">Media</Label>
+              <Label className="text-md leading-tight font-medium">Foto</Label>
               <FileUpload
                 value={files}
                 onValueChange={setFiles}
@@ -463,16 +466,16 @@ export default function CreatePostPage() {
 
                     <span className="text-sm font-medium">
                       {isMaxFilesReached
-                        ? `Limit Reached: max ${MAX_FILES} Images`
-                        : 'Drag and drop images here'}
+                        ? `Batas Tercapai: maks ${MAX_FILES} gambar`
+                        : 'Tarik dan lepas gambar di sini'}
                     </span>
 
                     <span className="text-muted-foreground text-center text-xs">
                       {isMaxFilesReached
-                        ? 'Please delete existing files to upload more.'
-                        : `Or click to browse (max ${MAX_FILES} files, up to ${MAX_FILE_SIZE_MEGABYTES}MB each)`}
+                        ? 'Silakan hapus file yang ada untuk mengunggah lebih banyak.'
+                        : `Atau klik untuk menelusuri (maks ${MAX_FILES} file, sampai ${MAX_FILE_SIZE_MEGABYTES}MB per file)`}
                       <br />
-                      Supported File types: PNG, JPG, JPEG
+                      Tipe file yang didukung: PNG, JPG, JPEG
                     </span>
                   </div>
                 </FileUploadDropzone>
@@ -496,7 +499,7 @@ export default function CreatePostPage() {
               <div className="bg-background border-border relative flex w-full max-w-xl justify-between gap-2 rounded-t-xl border-x border-t px-3 pt-3 pb-6 shadow-xs">
                 <Button type="submit" className="flex-1" disabled={loading}>
                   {loading && <Spinner className="inline-block" />}
-                  Post
+                  Buat unggahan
                 </Button>
               </div>
             </div>

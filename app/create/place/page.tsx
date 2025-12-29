@@ -146,7 +146,7 @@ export default function CreatePlacePage() {
         const res = await api.get('/categories');
         setCategories(res.data.data);
       } catch (error) {
-        toast.error('Failed to load categories. Please try again later');
+        toast.error('Gagal memuat kategori. Silakan coba lagi nanti');
       }
     };
     fetchCategories();
@@ -156,15 +156,15 @@ export default function CreatePlacePage() {
     e.preventDefault();
 
     if (!position) {
-      toast.error('Create place failed', {
-        description: 'Please select a location on the map',
+      toast.error('Gagal membuat tempat', {
+        description: 'Mohon pilih lokasi pada peta',
       });
       return;
     }
 
     if (!selectedCategory) {
-      toast.error('Create place failed', {
-        description: 'Please select a category',
+      toast.error('Gagal membuat tempat', {
+        description: 'Mohon pilih kategori',
       });
       return;
     }
@@ -182,15 +182,18 @@ export default function CreatePlacePage() {
     try {
       await api.post('/locations', placeData);
 
-      toast.success('Place created', {
-        description: 'The place has been successfully added',
+      toast.success('Tempat berhasil dibuat', {
+        description: 'Tempat baru telah berhasil ditambahkan',
       });
 
       router.back();
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      toast.error('Create place failed', {
-        description: 'Something went wrong. Please try again later',
+      const message =
+        error.response?.data?.message ||
+        'Terjadi kesalahan. Silakan coba lagi nanti';
+      toast.error('Gagal membuat tempat', {
+        description: message,
       });
     } finally {
       setLoading(false);
@@ -203,7 +206,7 @@ export default function CreatePlacePage() {
         <Button variant="ghost" size="icon" onClick={() => router.back()}>
           <ArrowLeft size={20} />
         </Button>
-        Create Place
+        Buat Tempat Baru
       </TopBar>
 
       <main className="flex flex-col items-center pb-[73px]">
@@ -218,12 +221,12 @@ export default function CreatePlacePage() {
                   className="text-md flex gap-1 leading-tight"
                   htmlFor="name"
                 >
-                  Place Name<span className="text-red-500">*</span>
+                  Nama Tempat<span className="text-red-500">*</span>
                 </Label>
                 <InputGroup>
                   <InputGroupInput
                     id="name"
-                    placeholder="Enter place name..."
+                    placeholder="Masukkan nama tempat..."
                     value={name}
                     onChange={(e) =>
                       e.target.value.length <= MAX_NAME &&
@@ -240,7 +243,7 @@ export default function CreatePlacePage() {
 
               <div className="flex flex-1 flex-col gap-2">
                 <Label className="text-md flex gap-1 leading-tight">
-                  Category<span className="text-red-500">*</span>
+                  Kategori<span className="text-red-500">*</span>
                 </Label>
 
                 <Popover
@@ -267,7 +270,7 @@ export default function CreatePlacePage() {
                           </>
                         ) : (
                           <span className="text-muted-foreground">
-                            Select category...
+                            Pilih kategori...
                           </span>
                         )}
                       </div>
@@ -277,9 +280,9 @@ export default function CreatePlacePage() {
 
                   <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
                     <Command>
-                      <CommandInput placeholder="Search category..." />
+                      <CommandInput placeholder="Cari kategori..." />
                       <CommandList>
-                        <CommandEmpty>No category found.</CommandEmpty>
+                        <CommandEmpty>Kategori tidak ditemukan.</CommandEmpty>
                         <CommandGroup>
                           {categories.map((cat) => {
                             const IconComponent =
@@ -321,13 +324,13 @@ export default function CreatePlacePage() {
                 className="text-md flex gap-1 leading-tight"
                 htmlFor="address"
               >
-                Address<span className="text-red-500">*</span>
+                Alamat<span className="text-red-500">*</span>
               </Label>
               <InputGroup>
                 <InputGroupTextarea
                   id="address"
                   rows={4}
-                  placeholder="Enter full address..."
+                  placeholder="Masukkan alamat lengkap..."
                   value={address}
                   onChange={(e) =>
                     e.target.value.length <= MAX_ADDRESS &&
@@ -344,7 +347,7 @@ export default function CreatePlacePage() {
 
             <div className="flex flex-col gap-2">
               <Label className="text-md flex gap-1 leading-tight">
-                Pin Location<span className="text-red-500">*</span>
+                Tandai Lokasi<span className="text-red-500">*</span>
               </Label>
               <div className="h-[300px] overflow-hidden rounded-md border">
                 <PlaceMap
@@ -354,7 +357,7 @@ export default function CreatePlacePage() {
                 />
               </div>
               <span className="text-muted-foreground text-xs">
-                Location:
+                Lokasi:
                 {position && (
                   <>
                     {position[0].toFixed(5)}, {position[1].toFixed(5)}
@@ -365,13 +368,13 @@ export default function CreatePlacePage() {
 
             <div className="flex flex-col gap-2">
               <Label className="text-md leading-tight" htmlFor="description">
-                Description
+                Deskripsi
               </Label>
               <InputGroup>
                 <InputGroupTextarea
                   id="description"
                   rows={4}
-                  placeholder="Describe this place..."
+                  placeholder="Deskripsikan tempat ini..."
                   value={description}
                   onChange={(e) =>
                     e.target.value.length <= MAX_DESC &&
@@ -390,7 +393,7 @@ export default function CreatePlacePage() {
               <div className="bg-background border-border relative flex w-full max-w-xl justify-between gap-2 rounded-t-xl border-x border-t px-3 pt-3 pb-6 shadow-xs">
                 <Button type="submit" className="flex-1" disabled={loading}>
                   {loading && <Spinner className="inline-block" />}
-                  Create place
+                  Buat tempat
                 </Button>
               </div>
             </div>

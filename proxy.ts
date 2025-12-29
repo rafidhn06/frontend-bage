@@ -9,7 +9,7 @@ export function proxy(request: NextRequest) {
     if (token && (pathname === '/login' || pathname === '/signup')) {
         return NextResponse.redirect(new URL('/feed', request.url))
     }
-    const protectedRoutes = ['/feed', '/search', '/notification', '/settings']
+    const protectedRoutes = ['/feed', '/search', '/notification', '/settings', '/create']
     if (!token && protectedRoutes.some(route => pathname.startsWith(route))) {
         return NextResponse.redirect(new URL('/login', request.url))
     }

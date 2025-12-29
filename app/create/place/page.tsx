@@ -42,6 +42,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { Spinner } from '@/components/ui/spinner';
+import api from '@/lib/axios';
 import { cn } from '@/lib/utils';
 
 const MAX_NAME = 100;
@@ -51,15 +53,11 @@ const MAX_DESC = 150;
 const JAKARTA_CENTER: [number, number] = [-6.2, 106.816666];
 const PlaceMap = dynamic(() => import('@/components/PlaceMap'), { ssr: false });
 
-const categories = [
-  { name: 'Kafe', icon: 'coffee' },
-  { name: 'Restoran', icon: 'utensils' },
-  { name: 'Taman', icon: 'tree' },
-  { name: 'Museum', icon: 'landmark' },
-  { name: 'Hotel', icon: 'hotel' },
-  { name: 'Wisata Alam', icon: 'mountain' },
-  { name: 'Lainnya', icon: 'ellipsis' },
-];
+interface Category {
+  id: number;
+  name: string;
+  icon: string;
+}
 
 const categoryIconMap: Record<
   string,
@@ -84,8 +82,12 @@ export default function CreatePlacePage() {
   const [mapCenter, setMapCenter] = useState<[number, number]>(JAKARTA_CENTER);
   const [position, setPosition] = useState<[number, number] | null>(null);
 
-  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(
+    null
+  );
+  const [categories, setCategories] = useState<Category[]>([]);
   const [categoryPopoverOpen, setCategoryPopoverOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const [locationPermissionResolved, setLocationPermissionResolved] =
     useState(false);
@@ -93,10 +95,10 @@ export default function CreatePlacePage() {
   useEffect(() => {
     const getLocationFromIP = async () => {
       try {
-        const res = await fetch('https://ipapi.co/json/');
+        const res = await fetch('https://ipwho.is/');
         const data = await res.json();
 
-        if (data.latitude && data.longitude && data.country === 'ID') {
+        if (data.latitude && data.longitude && data.country_code === 'ID') {
           const lat = Number(data.latitude);
           const lng = Number(data.longitude);
 
@@ -104,7 +106,6 @@ export default function CreatePlacePage() {
           setPosition([lat, lng]);
         }
       } catch (error) {
-        console.error('IP location failed', error);
       } finally {
         setLocationPermissionResolved(true);
       }
@@ -136,23 +137,34 @@ export default function CreatePlacePage() {
     };
 
     getLocationFromGPS();
+    getLocationFromGPS();
   }, []);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await api.get('/categories');
+        setCategories(res.data.data);
+      } catch (error) {
+        toast.error('Failed to load categories. Please try again later');
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!position) {
-      toast('Create Place Failed', {
-        description: 'Please select a location on the map.',
-        style: { backgroundColor: '#f05252', color: 'white' },
+      toast.error('Create place failed', {
+        description: 'Please select a location on the map',
       });
       return;
     }
 
     if (!selectedCategory) {
-      toast('Create Place Failed', {
-        description: 'Please select a category.',
-        style: { backgroundColor: '#f05252', color: 'white' },
+      toast.error('Create place failed', {
+        description: 'Please select a category',
       });
       return;
     }
@@ -163,17 +175,26 @@ export default function CreatePlacePage() {
       description,
       latitude: position[0],
       longitude: position[1],
-      category: selectedCategory,
+      category_id: selectedCategory.id,
     };
 
-    console.log('Submitting Place Data:', placeData);
+    setLoading(true);
+    try {
+      await api.post('/locations', placeData);
 
-    toast('Place Created', {
-      description: 'The place has been successfully added.',
-      style: { backgroundColor: '#10b981', color: 'white' },
-    });
+      toast.success('Place created', {
+        description: 'The place has been successfully added',
+      });
 
-    router.back();
+      router.back();
+    } catch (error) {
+      console.error(error);
+      toast.error('Create place failed', {
+        description: 'Something went wrong. Please try again later',
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -238,14 +259,11 @@ export default function CreatePlacePage() {
                           <>
                             {(() => {
                               const IconComponent =
-                                categoryIconMap[
-                                  categories.find(
-                                    (c) => c.name === selectedCategory
-                                  )!.icon
-                                ];
+                                categoryIconMap[selectedCategory.icon] ||
+                                Ellipsis;
                               return <IconComponent className="size-4" />;
                             })()}
-                            <span>{selectedCategory}</span>
+                            <span>{selectedCategory.name}</span>
                           </>
                         ) : (
                           <span className="text-muted-foreground">
@@ -264,13 +282,14 @@ export default function CreatePlacePage() {
                         <CommandEmpty>No category found.</CommandEmpty>
                         <CommandGroup>
                           {categories.map((cat) => {
-                            const IconComponent = categoryIconMap[cat.icon];
+                            const IconComponent =
+                              categoryIconMap[cat.icon] || Ellipsis;
                             return (
                               <CommandItem
-                                key={cat.name}
+                                key={cat.id}
                                 value={cat.name}
-                                onSelect={(currentValue) => {
-                                  setSelectedCategory(currentValue);
+                                onSelect={() => {
+                                  setSelectedCategory(cat);
                                   setCategoryPopoverOpen(false);
                                 }}
                               >
@@ -281,7 +300,7 @@ export default function CreatePlacePage() {
                                 <Check
                                   className={cn(
                                     'ml-auto h-4 w-4',
-                                    selectedCategory === cat.name
+                                    selectedCategory?.id === cat.id
                                       ? 'opacity-100'
                                       : 'opacity-0'
                                   )}
@@ -369,8 +388,9 @@ export default function CreatePlacePage() {
 
             <div className="fixed bottom-0 left-0 z-9999 flex w-dvw justify-center">
               <div className="bg-background border-border relative flex w-full max-w-xl justify-between gap-2 rounded-t-xl border-x border-t px-3 pt-3 pb-6 shadow-xs">
-                <Button type="submit" className="flex-1">
-                  Create Place
+                <Button type="submit" className="flex-1" disabled={loading}>
+                  {loading && <Spinner className="inline-block" />}
+                  Create place
                 </Button>
               </div>
             </div>

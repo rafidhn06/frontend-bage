@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
@@ -8,10 +8,17 @@ import {
   ArrowLeft,
   Check,
   ChevronsUpDown,
+  Coffee,
+  Ellipsis,
+  Hotel,
+  Landmark,
   MapPin,
+  Mountain,
   Plus,
   Star,
+  Trees,
   Upload,
+  Utensils,
   X,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -47,28 +54,30 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { Spinner } from '@/components/ui/spinner';
+import api from '@/lib/axios';
 import { cn } from '@/lib/utils';
 
-const places = [
-  {
-    label:
-      'Quis risus sed vulputate odio ut enim blandit volutpat maecenas volutpat blandi t aliquam etiam erat velit, scelerisque in dictum non, consectetur a! Justo, laoreet sit amet cursus sit amet, dictum?',
-    value: 'bogor-botanical-gardens',
-  },
-  {
-    label:
-      'Proin libero nunc, consequat interdum varius sit amet, mattis vulputate. ',
-    value: 'depok-botanical-gardens',
-  },
-  {
-    label:
-      'Facilisis volutpat, est velit egestas dui, id ornare arcu odio ut sem nulla pharetra diam sit amet nisl suscipit adipiscing bibendum est ultricies integer quis auctor elit sed vulputate? Convallis posuere morbi leo urna, molestie at elementum eu, facilisis sed.',
-    value: 'bandung-botanical-gardens',
-  },
-  { label: 'Mount Bromo National Park', value: 'bromo-tengger-semeru' },
-  { label: 'Borobudur Temple', value: 'borobudur-temple' },
-  { label: 'Kuta Beach', value: 'kuta-beach' },
-];
+interface Place {
+  id: number;
+  name: string;
+  slug: string;
+  category: string;
+  address: string;
+}
+
+const categoryIconMap: Record<
+  string,
+  React.FC<React.SVGProps<SVGSVGElement>>
+> = {
+  kafe: Coffee,
+  restoran: Utensils,
+  taman: Trees,
+  museum: Landmark,
+  hotel: Hotel,
+  'wisata-alam': Mountain,
+  ellipsis: Ellipsis,
+};
 
 const MAX_FILES = 4;
 const MAX_FILE_SIZE_MEGABYTES = 5;
@@ -78,7 +87,14 @@ export default function CreatePostPage() {
   const router = useRouter();
 
   const [popoverOpen, setPopoverOpen] = useState(false);
-  const [selectedPlace, setSelectedPlace] = useState('');
+  const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
+  const [places, setPlaces] = useState<Place[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [userLocation, setUserLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
 
   const [rating, setRating] = useState(0);
 
@@ -106,28 +122,89 @@ export default function CreatePostPage() {
     [files]
   );
 
+  useEffect(() => {
+    const getLocationFromIP = async () => {
+      try {
+        const res = await fetch('https://ipwho.is/');
+        const data = await res.json();
+
+        if (data.latitude && data.longitude && data.country_code === 'ID') {
+          const lat = Number(data.latitude);
+          const lng = Number(data.longitude);
+
+          setUserLocation({ latitude: lat, longitude: lng });
+        }
+      } catch (error) { }
+    };
+
+    const getLocationFromGPS = () => {
+      if (!navigator.geolocation) {
+        getLocationFromIP();
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const { latitude, longitude } = pos.coords;
+          setUserLocation({ latitude, longitude });
+        },
+        () => {
+          getLocationFromIP();
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 8000,
+          maximumAge: 0,
+        }
+      );
+    };
+
+    getLocationFromGPS();
+  }, []);
+
+  useEffect(() => {
+    const fetchPlaces = async () => {
+      try {
+        const params: any = {};
+        if (searchQuery) params.search = searchQuery;
+        if (userLocation) {
+          params.latitude = userLocation.latitude;
+          params.longitude = userLocation.longitude;
+        }
+
+        const res = await api.get('/locations', { params });
+        setPlaces(res.data.data);
+      } catch (error) {
+        toast.error('Failed to fetch places');
+      }
+    };
+
+    const debounceTimer = setTimeout(() => {
+      fetchPlaces();
+    }, 300);
+
+    return () => clearTimeout(debounceTimer);
+  }, [searchQuery, userLocation]);
+
   const onFileReject = useCallback((file: File, message: string) => {
-    toast(message, {
+    toast.error(message, {
       description: `"${file.name.length > 20 ? `${file.name.slice(0, 20)}...` : file.name}" has been rejected`,
-      style: { backgroundColor: '#f05252', color: 'white' },
     });
   }, []);
 
-  const handlePostSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handlePostSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!selectedPlace) {
-      toast('Post Failed', {
-        description: 'Please pin a place for your post.',
-        style: { backgroundColor: '#f05252', color: 'white' },
+      toast.error('Post failed', {
+        description: 'Please pin a place for your post',
       });
       return;
     }
 
     if (rating === 0) {
-      toast('Post Failed', {
-        description: 'Please provide a rating (1-5 stars).',
-        style: { backgroundColor: '#f05252', color: 'white' },
+      toast.error('Post failed', {
+        description: 'Please provide a rating (1-5 stars)',
       });
       return;
     }
@@ -135,24 +212,38 @@ export default function CreatePostPage() {
     const formData = new FormData(e.currentTarget);
     const caption = formData.get('caption') as string;
 
-    const postData = {
-      place: selectedPlace,
-      rating: rating,
-      caption: caption,
-      mediaCount: files.length,
-      mediaFiles: files,
-    };
+    const postData = new FormData();
+    postData.append('location_id', String(selectedPlace.id));
+    postData.append('rating', String(rating));
+    postData.append('content', caption);
 
-    console.log('Submitting Post Data:', postData);
-
-    toast('Post Successful', {
-      description: 'Your experience has been successfully shared!',
-      style: { backgroundColor: '#10b981', color: 'white' },
+    files.forEach((file) => {
+      postData.append('media[]', file);
     });
 
-    setRating(0);
-    setSelectedPlace('');
-    setFiles([]);
+    setLoading(true);
+    try {
+      await api.post('/posts', postData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      toast.success('Post successful', {
+        description: 'Your experience has been successfully shared!',
+      });
+
+      setRating(0);
+      setSelectedPlace(null);
+      setFiles([]);
+      router.back();
+    } catch (error) {
+      toast.error('Post failed', {
+        description: 'Something went wrong. Please try again later',
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const MAX_CHAR = 150;
@@ -185,120 +276,145 @@ export default function CreatePostPage() {
             onSubmit={handlePostSubmit}
             className="flex flex-col gap-4 px-4 py-6"
           >
-            <div className="flex flex-col gap-4 sm:flex-row">
-              <div className="flex min-w-0 flex-1 flex-col gap-2">
-                <Label
-                  htmlFor="place"
-                  className="text-md flex gap-1 leading-tight"
-                >
-                  Place<span className="text-red-500">*</span>
-                </Label>
-                <div className="flex w-full gap-2">
-                  <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        id="place"
-                        variant="outline"
-                        role="combobox"
-                        aria-expanded={popoverOpen}
-                        className="min-w-0 flex-1 justify-between"
-                      >
-                        <div className="flex min-w-0 flex-1 items-center gap-2">
-                          <MapPin className="text-muted-foreground" size={16} />
-                          <span className="text-muted-foreground truncate text-base font-normal md:text-sm">
-                            {selectedPlace
-                              ? places.find(
-                                  (loc) => loc.value === selectedPlace
-                                )?.label
-                              : 'Select place...'}
-                          </span>
-                        </div>
-                        <ChevronsUpDown
-                          className="text-muted-foreground ml-2 shrink-0"
-                          size={16}
-                        />
-                      </Button>
-                    </PopoverTrigger>
-
-                    <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
-                      <Command>
-                        <CommandInput placeholder="Search place..." />
-                        <CommandList>
-                          <CommandEmpty>No place found.</CommandEmpty>
-                          <CommandGroup>
-                            {places.map((loc) => (
-                              <CommandItem
-                                key={loc.value}
-                                value={loc.value}
-                                onSelect={(currentValue) => {
-                                  setSelectedPlace(
-                                    currentValue === selectedPlace
-                                      ? ''
-                                      : currentValue
-                                  );
-                                  setPopoverOpen(false);
-                                }}
-                              >
-                                {loc.label}
-                                <Check
-                                  className={cn(
-                                    'ml-auto h-4 w-4',
-                                    selectedPlace === loc.value
-                                      ? 'opacity-100'
-                                      : 'opacity-0'
-                                  )}
-                                />
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    aria-label="Add new place"
-                    onClick={() => router.push('/create/place')}
-                  >
-                    <Plus size={16} />
-                  </Button>
-                </div>
-                <input type="hidden" name="place" value={selectedPlace} />
-              </div>
-
-              <div className="xs:w-auto flex flex-1 flex-col gap-2">
-                <Label
-                  htmlFor="rating"
-                  className="text-md flex gap-1 leading-tight"
-                >
-                  Rating <span className="text-red-500">*</span>
-                </Label>
-                <div className="xs:justify-start flex items-center justify-center">
-                  {[...Array(5)].map((_, index) => {
-                    const ratingValue = index + 1;
-                    return (
-                      <button
-                        id="rating"
-                        key={index}
-                        type="button"
-                        className={cn(
-                          'rounded-sm p-1.5 transition-colors hover:bg-yellow-300/10 hover:text-yellow-300',
-                          ratingValue <= rating
-                            ? 'text-yellow-300 *:[svg]:fill-yellow-300'
-                            : 'text-muted-foreground/30'
+            <div className="flex min-w-0 flex-1 flex-col gap-2">
+              <Label
+                htmlFor="place"
+                className="text-md flex gap-1 leading-tight"
+              >
+                Place<span className="text-red-500">*</span>
+              </Label>
+              <div className="flex w-full gap-2">
+                <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      id="place"
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={popoverOpen}
+                      className="min-w-0 flex-1 justify-between"
+                    >
+                      <div className="text-muted-foreground flex items-center gap-2 truncate text-base font-normal md:text-sm">
+                        {selectedPlace ? (
+                          <>
+                            {(() => {
+                              const IconComponent =
+                                categoryIconMap[selectedPlace.slug] || Ellipsis;
+                              return <IconComponent className="size-4" />;
+                            })()}
+                            <span>{selectedPlace.name}</span>
+                          </>
+                        ) : (
+                          <>
+                            <MapPin className="size-4" />
+                            <span>Select place...</span>
+                          </>
                         )}
-                        onClick={() => setRating(ratingValue)}
-                        aria-label={`Set rating to ${ratingValue} stars`}
-                      >
-                        <Star size={24} />
-                      </button>
-                    );
-                  })}
-                </div>
-                <input type="hidden" name="rating" value={rating} />
+                      </div>
+                      <ChevronsUpDown
+                        className="text-muted-foreground ml-2 shrink-0"
+                        size={16}
+                      />
+                    </Button>
+                  </PopoverTrigger>
+
+                  <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+                    <Command shouldFilter={false}>
+                      <CommandInput
+                        placeholder="Search place..."
+                        value={searchQuery}
+                        onValueChange={setSearchQuery}
+                      />
+                      <CommandList>
+                        <CommandEmpty>No place found.</CommandEmpty>
+                        <CommandGroup>
+                          {places.map((place) => (
+                            <CommandItem
+                              key={place.id}
+                              value={String(place.id)}
+                              onSelect={() => {
+                                setSelectedPlace(
+                                  selectedPlace?.id === place.id ? null : place
+                                );
+                                setPopoverOpen(false);
+                              }}
+                            >
+                              <div className="flex items-center gap-2">
+                                {(() => {
+                                  const IconComponent =
+                                    categoryIconMap[place.slug] || Ellipsis;
+                                  return (
+                                    <IconComponent className="mt-0.5 size-4" />
+                                  );
+                                })()}
+                                <div className="flex flex-col">
+                                  <span>{place.name}</span>
+                                  <span className="text-muted-foreground text-xs">
+                                    {place.address}
+                                  </span>
+                                </div>
+                              </div>
+                              <Check
+                                className={cn(
+                                  'ml-auto h-4 w-4',
+                                  selectedPlace?.id === place.id
+                                    ? 'opacity-100'
+                                    : 'opacity-0'
+                                )}
+                              />
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  aria-label="Add new place"
+                  onClick={() => router.push('/create/place')}
+                >
+                  <Plus size={16} />
+                </Button>
               </div>
+              <input
+                type="hidden"
+                name="place"
+                value={selectedPlace?.id || ''}
+              />
+            </div>
+
+            <div className="flex flex-1 flex-col gap-2">
+              <Label
+                htmlFor="rating"
+                className="text-md flex gap-1 leading-tight"
+              >
+                Rating <span className="text-red-500">*</span>
+              </Label>
+              <div className="flex items-center justify-center">
+                {[...Array(5)].map((_, index) => {
+                  const ratingValue = index + 1;
+                  return (
+                    <button
+                      id="rating"
+                      key={index}
+                      type="button"
+                      className={cn(
+                        'rounded-sm p-1.5 transition-colors hover:bg-yellow-300/10 hover:text-yellow-300',
+                        ratingValue <= rating
+                          ? 'text-yellow-300 *:[svg]:fill-yellow-300'
+                          : 'text-muted-foreground/30'
+                      )}
+                      onClick={() => setRating(ratingValue)}
+                      aria-label={`Set rating to ${ratingValue} stars`}
+                    >
+                      <Star size={24} />
+                    </button>
+                  );
+                })}
+              </div>
+              <input type="hidden" name="rating" value={rating} />
             </div>
 
             <div className="flex flex-col gap-2">
@@ -361,8 +477,8 @@ export default function CreatePostPage() {
                   </div>
                 </FileUploadDropzone>
                 <FileUploadList>
-                  {files.map((file) => (
-                    <FileUploadItem key={file.name} value={file}>
+                  {files.map((file, index) => (
+                    <FileUploadItem key={`${file.name}-${index}`} value={file}>
                       <FileUploadItemPreview className="select-none" />
                       <FileUploadItemMetadata />
                       <FileUploadItemDelete asChild>
@@ -378,7 +494,8 @@ export default function CreatePostPage() {
 
             <div className="fixed bottom-0 left-0 z-60 flex w-dvw justify-center">
               <div className="bg-background border-border relative flex w-full max-w-xl justify-between gap-2 rounded-t-xl border-x border-t px-3 pt-3 pb-6 shadow-xs">
-                <Button type="submit" className="flex-1">
+                <Button type="submit" className="flex-1" disabled={loading}>
+                  {loading && <Spinner className="inline-block" />}
                   Post
                 </Button>
               </div>

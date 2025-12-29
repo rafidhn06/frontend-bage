@@ -37,7 +37,7 @@ export default function SettingsPage() {
       router.push('/login');
     } catch (error) {
       console.error('Delete account failed:', error);
-      toast.error('Gagal menghapus akun. Silakan coba lagi');
+      toast.error('Gagal menghapus akun. Silakan coba lagi.');
     }
   };
 
@@ -48,7 +48,7 @@ export default function SettingsPage() {
       router.push('/login');
     } catch (error) {
       console.error('Logout failed:', error);
-      toast.error('Gagal keluar. Silakan coba lagi');
+      toast.error('Gagal keluar. Silakan coba lagi.');
     }
   };
 

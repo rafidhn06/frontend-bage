@@ -3,6 +3,9 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
+import api from '@/lib/axios';
+import { AxiosError } from 'axios';
+
 import { useRouter } from 'next/navigation';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -46,37 +49,26 @@ export default function LoginForm() {
     },
   });
 
+
+
+  // ... (imports remain)
+
+  // ...
+
   async function onSubmit(data: FormValues) {
     try {
-      const response = await fetch(
-        process.env.NEXT_PUBLIC_API_URL + '/auth/login',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            credential: data.username,
-            password: data.password,
-          }),
-        }
-      );
+      await api.post('/auth/login', {
+        credential: data.username,
+        password: data.password,
+      });
 
-      const json = await response.json();
-
-      if (!response.ok) {
+      router.push('/feed');
+    } catch (error) {
+      if (error instanceof AxiosError && error.response?.status === 401) {
         setResponseError('Invalid email or password');
-        return;
+      } else {
+        setResponseError('Something went wrong. Please try again later');
       }
-
-      const token = json.access_token;
-      if (token) {
-        localStorage.setItem('access_token', token);
-
-        router.push('/feed');
-      }
-    } catch {
-      setResponseError('Something went wrong. Please try again later');
     }
   }
 

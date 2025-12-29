@@ -3,6 +3,9 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
+import api from '@/lib/axios';
+import { AxiosError } from 'axios';
+
 import { useRouter } from 'next/navigation';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -71,40 +74,24 @@ export default function SignUpForm() {
     mode: 'onChange',
   });
 
+
+
+  // ...
+
   async function onSubmit(data: FormValues) {
     try {
-      const response = await fetch(
-        process.env.NEXT_PUBLIC_API_URL + '/auth/register',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            name: data.fullName,
-            username: data.username,
-            email: data.email,
-            password: data.password,
-            password_confirmation: data.passwordConfirmation,
-          }),
-        }
-      );
+      await api.post('/auth/register', {
+        name: data.fullName,
+        username: data.username,
+        email: data.email,
+        password: data.password,
+        password_confirmation: data.passwordConfirmation,
+      });
 
-      const json = await response.json();
-
-      if (!response.ok) {
-        setResponseError('Email or username is taken');
-        return;
-      }
-
-      const token = json.access_token;
-      if (token) {
-        localStorage.setItem('access_token', token);
-
-        router.push('/feed');
-      }
-    } catch {
-      setResponseError('Something went wrong. Please try again later');
+      router.push('/feed');
+    } catch (error) {
+      // Assuming 422 or similar for validation errors, or failure response from backend
+      setResponseError('Email or username is taken');
     }
   }
 

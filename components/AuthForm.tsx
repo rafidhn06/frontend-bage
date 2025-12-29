@@ -16,7 +16,7 @@ export default function AuthForm({
   linkHref,
 }: AuthFormProps) {
   return (
-    <div className="flex w-full max-w-80 grow-3 flex-col gap-4 md:max-w-70 md:grow-0">
+    <div className="flex w-full max-w-80 flex-col gap-4 md:max-w-70">
       <div>
         <div className="text-2xl font-semibold tracking-tight">{title}</div>
         <div className="text-muted-foreground">{description}</div>

@@ -175,7 +175,7 @@ export default function PostItem() {
 
       <span className="text-sm">Lorem ipsum dolor sit amet consectur</span>
 
-      <div className="has-[button:focus-visible]:ring-ring/50 grid aspect-[16/9] grid-cols-2 grid-rows-2 gap-1 overflow-hidden rounded-xl transition-colors select-none has-[button:focus-visible]:ring-3">
+      <div className="has-[button:focus-visible]:ring-ring/50 grid aspect-[16/9] grid-cols-2 grid-rows-2 gap-1 overflow-hidden rounded-xl transition-colors select-none has-[button:focus-visible]:ring-2">
         {images.map((src, i) => (
           <button
             key={i}

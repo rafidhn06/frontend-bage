@@ -5,17 +5,18 @@ import AuthForm from '@/components/AuthForm';
 import SignUpForm from './SignUpForm';
 
 export const metadata: Metadata = {
-  title: 'Sign Up',
+  title: 'Daftar',
 };
 
 export default function SignUpPage() {
   return (
     <AuthForm
-      title="Create your account"
-      description="Join us to start sharing your stories"
+      title="Buat akun Anda"
+      description="Bergabung untuk mulai berbagi"
       form={<SignUpForm />}
-      linkText="Already have an account?"
+      linkText="Sudah punya akun?"
       linkHref="/login"
+      linkActionText="Masuk"
     />
   );
 }

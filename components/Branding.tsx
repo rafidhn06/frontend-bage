@@ -13,7 +13,7 @@ export default function Branding() {
           loading="eager"
         />
         <span className="text-secondary-foreground hidden leading-tight font-light md:inline md:text-2xl lg:inline">
-          Every place has a story
+          Setiap tempat punya cerita
         </span>
       </div>
     </>

@@ -63,7 +63,7 @@ export default function NavigationBar() {
         <Link
           href="/create/post"
           aria-label="Create new post"
-          className={`hover:bg-primary/70 focus-visible:bg-primary/70 text-primary-foreground focus-visible:ring-ring/50 focus-visible:border-ring xs:px-3 xs:py-2 w-fit cursor-pointer rounded-lg px-4 py-3 transition outline-none focus-visible:ring-3 ${
+          className={`hover:bg-primary/70 focus-visible:bg-primary/70 text-primary-foreground focus-visible:ring-ring/50 focus-visible:border-ring xs:px-3 xs:py-2 w-fit cursor-pointer rounded-lg px-4 py-3 transition outline-none focus-visible:ring-2 ${
             isActive('/create/post')
               ? 'bg-primary/70 text-foreground'
               : 'text-muted-foreground bg-primary'

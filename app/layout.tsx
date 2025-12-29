@@ -1,16 +1,9 @@
 import type { Metadata } from 'next';
-import { Roboto } from 'next/font/google';
 import { Inter } from 'next/font/google';
 
 import 'leaflet/dist/leaflet.css';
 
 import './globals.css';
-
-const roboto = Roboto({
-  subsets: ['latin'],
-  variable: '--font-roboto',
-  display: 'swap',
-});
 
 const inter = Inter({
   subsets: ['latin'],
@@ -30,9 +23,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${roboto.variable} ${inter.variable} font-sans antialiased`}
-      >
+      <body className={`${inter.variable} font-sans antialiased`}>
         {children}
       </body>
     </html>

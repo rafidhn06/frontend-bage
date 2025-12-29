@@ -3,44 +3,43 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import api from '@/lib/axios';
-import { AxiosError } from 'axios';
-
 import { useRouter } from 'next/navigation';
 
 import { zodResolver } from '@hookform/resolvers/zod';
+import { AxiosError } from 'axios';
+import { toast } from 'sonner';
 import * as z from 'zod';
 
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
+import api from '@/lib/axios';
 
 const formSchema = z.object({
   username: z
     .string()
-    .min(1, { message: 'Email or username is required' })
-    .max(100, { message: 'Identifier cannot exceed 100 characters' })
-    .regex(/^\S+$/, { message: 'Username cannot contain spaces' }),
+    .min(1, { message: 'Email atau username wajib diisi' })
+    .max(100, { message: 'Identifier tidak boleh lebih dari 100 karakter' })
+    .regex(/^\S+$/, { message: 'Username tidak boleh mengandung spasi' }),
 
   password: z
     .string()
-    .min(1, { message: 'Password is required' })
-    .max(255, { message: 'Password cannot exceed 255 characters' }),
+    .min(1, { message: 'Password wajib diisi' })
+    .max(255, { message: 'Password tidak boleh lebih dari 255 karakter' }),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
 export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
-  const [responseError, setResponseError] = useState<string | null>(null);
 
   const router = useRouter();
 
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting, isSubmitSuccessful },
+    formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -49,12 +48,6 @@ export default function LoginForm() {
     },
   });
 
-
-
-  // ... (imports remain)
-
-  // ...
-
   async function onSubmit(data: FormValues) {
     try {
       await api.post('/auth/login', {
@@ -62,12 +55,16 @@ export default function LoginForm() {
         password: data.password,
       });
 
+      toast.success('Login berhasil');
       router.push('/feed');
     } catch (error) {
-      if (error instanceof AxiosError && error.response?.status === 401) {
-        setResponseError('Invalid email or password');
+      if (error instanceof AxiosError) {
+        toast.error(
+          error.response?.data?.message ||
+          'Terjadi kesalahan. Silakan coba lagi'
+        );
       } else {
-        setResponseError('Something went wrong. Please try again later');
+        toast.error('Terjadi kesalahan. Silakan coba lagi');
       }
     }
   }
@@ -77,12 +74,12 @@ export default function LoginForm() {
       <div className="flex flex-col gap-2">
         <div className="flex flex-col gap-1">
           <label htmlFor="identifier" className="sr-only">
-            Email or username
+            Email atau username
           </label>
           <Input
             id="identifier"
             type="text"
-            placeholder="Email or username"
+            placeholder="Email atau username"
             autoComplete="username"
             {...register('username')}
           />
@@ -122,7 +119,7 @@ export default function LoginForm() {
           htmlFor="show-password"
           className="text-secondary-foreground text-sm font-normal"
         >
-          Show password
+          Tampilkan password
         </label>
       </div>
 
@@ -133,13 +130,8 @@ export default function LoginForm() {
           disabled={isSubmitting}
         >
           {isSubmitting && <Spinner aria-hidden className="inline-block" />}
-          {isSubmitSuccessful && !responseError
-            ? "you're good to go :D"
-            : 'Sign In'}
+          Masuk
         </Button>
-        {responseError && (
-          <span className="text-destructive text-sm">{responseError}</span>
-        )}
       </div>
     </form>
   );

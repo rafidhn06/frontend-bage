@@ -5,17 +5,18 @@ import AuthForm from '@/components/AuthForm';
 import LoginForm from './LoginForm';
 
 export const metadata: Metadata = {
-  title: 'Login',
+  title: 'Masuk',
 };
 
 export default function LoginPage() {
   return (
     <AuthForm
-      title="Welcome"
-      description="Sign in to continue"
+      title="Selamat Datang"
+      description="Masuk untuk melanjutkan"
       form={<LoginForm />}
-      linkText="Don't have an account?"
+      linkText="Belum punya akun?"
       linkHref="/signup"
+      linkActionText="Daftar"
     />
   );
 }

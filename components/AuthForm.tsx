@@ -6,6 +6,7 @@ type AuthFormProps = {
   form: React.ReactNode;
   linkText: string;
   linkHref: string;
+  linkActionText: string;
 };
 
 export default function AuthForm({
@@ -14,6 +15,7 @@ export default function AuthForm({
   form,
   linkText,
   linkHref,
+  linkActionText,
 }: AuthFormProps) {
   return (
     <div className="flex w-full max-w-80 flex-col gap-4 md:max-w-70">
@@ -25,7 +27,7 @@ export default function AuthForm({
       <div className="text-sm leading-none">
         <span>{linkText} </span>
         <Link href={linkHref} className="underline">
-          {linkHref.includes('signup') ? 'Sign up' : 'Sign in'}
+          {linkActionText}
         </Link>
       </div>
     </div>

@@ -3,50 +3,50 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import api from '@/lib/axios';
-import { AxiosError } from 'axios';
-
 import { useRouter } from 'next/navigation';
 
 import { zodResolver } from '@hookform/resolvers/zod';
+import { AxiosError } from 'axios';
+import { toast } from 'sonner';
 import * as z from 'zod';
 
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
+import api from '@/lib/axios';
 
 export const formSchema = z
   .object({
     fullName: z
       .string()
-      .min(1, { message: 'Name is required.' })
-      .max(100, { message: 'Name cannot exceed 100 characters.' }),
+      .min(1, { message: 'Nama lengkap wajib diisi' })
+      .max(100, { message: 'Nama tidak boleh lebih dari 100 karakter' }),
 
     username: z
       .string()
-      .min(1, { message: 'Username is required.' })
-      .max(50, { message: 'Username cannot exceed 50 characters.' })
-      .regex(/^\S+$/, { message: 'Username cannot contain spaces.' }),
+      .min(1, { message: 'Username wajib diisi' })
+      .max(50, { message: 'Username tidak boleh lebih dari 50 karakter' })
+      .regex(/^\S+$/, { message: 'Username tidak boleh mengandung spasi' }),
 
     email: z
-      .email({ message: 'Email format is invalid.' })
-      .max(100, { message: 'Email cannot exceed 100 characters.' }),
+      .email({ message: 'Format email tidak valid' })
+      .max(100, { message: 'Email tidak boleh lebih dari 100 karakter' }),
 
     password: z
       .string()
-      .max(100, { message: 'Password cannot exceed 100 characters.' })
+      .max(100, { message: 'Password tidak boleh lebih dari 100 karakter' })
       .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/, {
-        message: 'At least 8 characters with upper, lower, number, and symbol.',
+        message: 'Minimal 8 karakter, huruf besar, huruf kecil, angka, dan simbol',
       }),
 
     passwordConfirmation: z
       .string()
-      .min(1, { message: 'Password confirmation is required.' }),
+      .min(1, { message: 'Konfirmasi password wajib diisi' }),
   })
 
   .refine((data) => data.password === data.passwordConfirmation, {
-    message: 'Password confirmation does not match.',
+    message: 'Konfirmasi password tidak sesuai',
     path: ['passwordConfirmation'],
   });
 
@@ -54,14 +54,13 @@ type FormValues = z.infer<typeof formSchema>;
 
 export default function SignUpForm() {
   const [showPassword, setShowPassword] = useState(false);
-  const [responseError, setResponseError] = useState<string | null>(null);
 
   const router = useRouter();
 
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting, isSubmitSuccessful },
+    formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -74,10 +73,6 @@ export default function SignUpForm() {
     mode: 'onChange',
   });
 
-
-
-  // ...
-
   async function onSubmit(data: FormValues) {
     try {
       await api.post('/auth/register', {
@@ -88,10 +83,17 @@ export default function SignUpForm() {
         password_confirmation: data.passwordConfirmation,
       });
 
+      toast.success('Pendaftaran berhasil');
       router.push('/feed');
     } catch (error) {
-      // Assuming 422 or similar for validation errors, or failure response from backend
-      setResponseError('Email or username is taken');
+      if (error instanceof AxiosError) {
+        toast.error(
+          error.response?.data?.message ||
+          'Terjadi kesalahan. Silakan coba lagi'
+        );
+      } else {
+        toast.error('Terjadi kesalahan. Silakan coba lagi');
+      }
     }
   }
 
@@ -106,9 +108,9 @@ export default function SignUpForm() {
           <Input
             id="full-name"
             type="text"
-            placeholder="Full name"
+            placeholder="Nama Lengkap"
             {...register('fullName')}
-            aria-label="Full name"
+            aria-label="Nama Lengkap"
             className={errors.fullName ? 'border-destructive' : ''}
           />
           {errors.fullName && (
@@ -170,9 +172,9 @@ export default function SignUpForm() {
           <Input
             id="confirm-password"
             type={showPassword ? 'text' : 'password'}
-            placeholder="Confirm password"
+            placeholder="Konfirmasi Password"
             {...register('passwordConfirmation')}
-            aria-label="Password confirmation"
+            aria-label="Konfirmasi Password"
             className={errors.passwordConfirmation ? 'border-destructive' : ''}
           />
           {errors.passwordConfirmation && (
@@ -181,20 +183,20 @@ export default function SignUpForm() {
             </span>
           )}
         </div>
+      </div>
 
-        <div className="flex items-center gap-2">
-          <Checkbox
-            id="show-password"
-            checked={showPassword}
-            onCheckedChange={(checked) => setShowPassword(!!checked)}
-          />
-          <label
-            htmlFor="show-password"
-            className="text-secondary-foreground text-sm font-normal"
-          >
-            Show password
-          </label>
-        </div>
+      <div className="flex items-center gap-2">
+        <Checkbox
+          id="show-password"
+          checked={showPassword}
+          onCheckedChange={(checked) => setShowPassword(!!checked)}
+        />
+        <label
+          htmlFor="show-password"
+          className="text-secondary-foreground text-sm font-normal"
+        >
+          Tampilkan password
+        </label>
       </div>
 
       <div className="flex flex-col gap-1">
@@ -204,13 +206,9 @@ export default function SignUpForm() {
           disabled={isSubmitting}
         >
           {isSubmitting && <Spinner aria-hidden className="inline-block" />}
-          {isSubmitSuccessful && !responseError
-            ? "you're good to go :D"
-            : 'Sign In'}
+          Daftar
         </Button>
-        {responseError && (
-          <span className="text-destructive text-sm">{responseError}</span>
-        )}
+
       </div>
     </form>
   );

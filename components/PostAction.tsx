@@ -64,7 +64,7 @@ export default function PostAction({
         <button
           aria-label="Like post"
           onClick={handleLikeClick}
-          className={`peer text-muted-foreground cursor-pointer rounded-sm p-1 transition hover:bg-red-500/10 hover:text-red-500 focus-visible:bg-red-500/10 focus-visible:text-red-500 focus-visible:ring-3 focus-visible:ring-red-300 focus-visible:outline-none ${
+          className={`peer text-muted-foreground cursor-pointer rounded-sm p-1 transition hover:bg-red-500/10 hover:text-red-500 focus-visible:bg-red-500/10 focus-visible:text-red-500 focus-visible:ring-2 focus-visible:ring-red-300 focus-visible:outline-none ${
             liked ? 'text-red-500 *:[svg]:fill-red-500' : ''
           }`}
         >
@@ -83,7 +83,7 @@ export default function PostAction({
         <button
           aria-label="View comments"
           onClick={stopPropagation}
-          className="peer text-muted-foreground cursor-pointer rounded-sm p-1 transition hover:bg-blue-500/10 hover:text-blue-500 focus-visible:bg-blue-500/10 focus-visible:text-blue-500 focus-visible:ring-3 focus-visible:ring-blue-300 focus-visible:outline-none"
+          className="peer text-muted-foreground cursor-pointer rounded-sm p-1 transition hover:bg-blue-500/10 hover:text-blue-500 focus-visible:bg-blue-500/10 focus-visible:text-blue-500 focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:outline-none"
         >
           <MessageCircle size={16} />
         </button>
@@ -99,7 +99,7 @@ export default function PostAction({
               <button
                 aria-label="More options"
                 onClick={stopPropagation}
-                className="text-muted-foreground hover:bg-accent focus-visible:bg-accent focus-visible:ring-ring/50 cursor-pointer rounded-sm p-1 transition focus:outline-none focus-visible:ring-3"
+                className="text-muted-foreground hover:bg-accent focus-visible:bg-accent focus-visible:ring-ring/50 cursor-pointer rounded-sm p-1 transition focus:outline-none focus-visible:ring-2"
               >
                 <Ellipsis size={16} />
               </button>
@@ -142,7 +142,7 @@ export default function PostAction({
             <DropdownMenuTrigger
               asChild
               onClick={stopPropagation}
-              className="text-muted-foreground hover:bg-accent focus-visible:bg-accent focus-visible:ring-ring/50 cursor-pointer rounded-sm p-1 transition focus:outline-none focus-visible:ring-3"
+              className="text-muted-foreground hover:bg-accent focus-visible:bg-accent focus-visible:ring-ring/50 cursor-pointer rounded-sm p-1 transition focus:outline-none focus-visible:ring-2"
             >
               <button aria-label="More options">
                 <Ellipsis size={16} />

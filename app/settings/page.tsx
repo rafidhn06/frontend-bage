@@ -3,7 +3,15 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-import { ArrowLeft, ChevronRight, Lock, Trash2, User } from 'lucide-react';
+import {
+  ArrowLeft,
+  ChevronRight,
+  Lock,
+  LogOut,
+  Trash2,
+  User,
+} from 'lucide-react';
+import { Toaster, toast } from 'sonner';
 
 import TopBar from '@/components/TopBar';
 import { Button } from '@/components/ui/button';
@@ -17,16 +25,31 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import api from '@/lib/axios';
 
 export default function SettingsPage() {
   const router = useRouter();
 
   const handleDeleteAccount = async () => {
-    // Panggil API untuk hapus akun
-    // await fetch('/api/delete-account', { method: 'POST' });
+    try {
+      await api.delete('/auth/account');
+      toast.success('Akun berhasil dihapus');
+      router.push('/login');
+    } catch (error) {
+      console.error('Delete account failed:', error);
+      toast.error('Gagal menghapus akun. Silakan coba lagi');
+    }
+  };
 
-    alert('Account deleted!'); // ganti dengan logic API
-    router.push('/'); // Redirect ke homepage
+  const handleLogout = async () => {
+    try {
+      await api.post('/auth/logout');
+      toast.success('Berhasil keluar (logout)');
+      router.push('/login');
+    } catch (error) {
+      console.error('Logout failed:', error);
+      toast.error('Gagal keluar. Silakan coba lagi');
+    }
   };
 
   return (
@@ -41,7 +64,7 @@ export default function SettingsPage() {
         <div className="divide-border w-full max-w-xl divide-y divide-solid">
           <Link
             href="/settings/profile"
-            className="hover:bg-muted flex items-center justify-between px-4 py-5"
+            className="hover:bg-accent/40 focus-visible:bg-accent/40 focus:inset-ring-ring/50 flex h-22 items-center justify-between px-4 py-5 transition-colors focus:outline-none focus-visible:inset-ring-2"
           >
             <div className="flex items-center gap-3">
               <div className="p-2">
@@ -59,7 +82,7 @@ export default function SettingsPage() {
 
           <Link
             href="/settings/account"
-            className="hover:bg-muted flex items-center justify-between px-4 py-5"
+            className="hover:bg-accent/40 focus-visible:bg-accent/40 focus:inset-ring-ring/50 flex h-22 items-center justify-between px-4 py-5 transition-colors focus:outline-none focus-visible:inset-ring-2"
           >
             <div className="flex items-center gap-3">
               <div className="p-2">
@@ -77,12 +100,39 @@ export default function SettingsPage() {
 
           <Dialog>
             <DialogTrigger asChild>
-              <div className="flex cursor-pointer items-center gap-3 px-4 py-5 text-red-600 hover:bg-red-100">
+              <button className="flex h-22 w-full cursor-pointer items-center gap-3 px-4 py-5 text-yellow-500 transition-colors hover:bg-yellow-300/10 focus:inset-ring-yellow-300/40 focus:outline-none focus-visible:bg-yellow-300/10 focus-visible:inset-ring-2">
+                <div className="p-2">
+                  <LogOut size={20} />
+                </div>
+                <span className="font-semibold">Log Out</span>
+              </button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Delete Account</DialogTitle>
+                <DialogDescription>
+                  Are you sure you want to logout from your account?
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button variant="outline">Cancel</Button>
+                </DialogClose>
+                <Button variant="destructive" onClick={handleLogout}>
+                  Logout
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog>
+            <DialogTrigger asChild>
+              <button className="flex h-22 w-full cursor-pointer items-center gap-3 px-4 py-5 text-red-500 transition-colors hover:bg-red-500/10 focus-visible:bg-red-500/10 focus-visible:ring-2 focus-visible:ring-red-300 focus-visible:outline-none">
                 <div className="p-2">
                   <Trash2 size={20} />
                 </div>
                 <span className="font-semibold">Delete Account</span>
-              </div>
+              </button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
               <DialogHeader>
@@ -104,6 +154,7 @@ export default function SettingsPage() {
           </Dialog>
         </div>
       </main>
+      <Toaster richColors position="top-right" style={{ top: '68px' }} />
     </>
   );
 }

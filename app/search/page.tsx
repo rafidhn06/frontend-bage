@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -17,8 +17,9 @@ import {
   InputGroupAddon,
   InputGroupInput,
 } from '@/components/ui/input-group';
+import { mockPost } from '@/lib/mockData';
 
-export default function SearchPage() {
+function SearchContent() {
   const searchParams = useSearchParams();
 
   const initialQuery = searchParams.get('q') || '';
@@ -98,12 +99,20 @@ export default function SearchPage() {
             <AccountItem />
             <PlaceItem />
             <PlaceItem />
-            <PostItem />
-            <PostItem />
+            <PostItem post={mockPost} />
+            <PostItem post={mockPost} />
           </div>
         </main>
       )}
       <NavigationBar />
     </>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <SearchContent />
+    </Suspense>
   );
 }

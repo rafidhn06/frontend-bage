@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { Ellipsis, Heart, MessageCircle } from 'lucide-react';
 import { Copy, Trash, UserPlus } from 'lucide-react';
+import { toast } from 'sonner';
 
 import {
   Drawer,
@@ -21,29 +22,92 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useIsomorphicLayoutEffect } from '@/hooks/use-isomorphic-layout-effect';
 import { useMediaQuery } from '@/hooks/use-media-query';
+import api from '@/lib/axios';
 
 interface PostActionProps {
+  postId: number;
+  authorId: number;
+  authorUsername: string;
+  isMine: boolean;
   initialLikes: number;
   initialIsLiked: boolean;
+  initialIsFollowed: boolean;
   repliesCount: number;
   stopPropagation: (e: React.MouseEvent<HTMLElement>) => void;
 }
 
 export default function PostAction({
+  postId,
+  authorId,
+  authorUsername,
+  isMine,
   initialLikes,
   initialIsLiked,
+  initialIsFollowed,
   repliesCount,
   stopPropagation,
 }: PostActionProps) {
   const [liked, setLiked] = useState(initialIsLiked);
   const [likeCount, setLikeCount] = useState(initialLikes);
+  const [isFollowed, setIsFollowed] = useState(initialIsFollowed);
 
-  const handleLikeClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleLikeClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
-    setLiked((prevLiked) => {
-      setLikeCount((prevCount) => prevCount + (prevLiked ? -1 : 1));
-      return !prevLiked;
-    });
+
+    const previousLiked = liked;
+    const previousLikeCount = likeCount;
+
+    setLiked((prevLiked) => !prevLiked);
+    setLikeCount((prevCount) => prevCount + (liked ? -1 : 1));
+
+    try {
+      await api.post(`/posts/${postId}/like`);
+    } catch (error) {
+      setLiked(previousLiked);
+      setLikeCount(previousLikeCount);
+      toast.error('Gagal menyukai unggahan. Silakan coba lagi nanti.');
+    }
+  };
+
+  const handleFollow = async (e: React.MouseEvent<HTMLElement>) => {
+    e.stopPropagation();
+    const prevFollowed = isFollowed;
+    setIsFollowed(!prevFollowed);
+    try {
+      await api.post(`/users/${authorId}/follow`);
+      toast.success(
+        prevFollowed
+          ? `Berhenti mengikuti @${authorUsername}`
+          : `Mulai mengikuti @${authorUsername}`
+      );
+    } catch (error) {
+      setIsFollowed(prevFollowed);
+      toast.error('Gagal mengikuti. Silakan coba lagi nanti.');
+    }
+  };
+
+  const handleCopyLink = async (e: React.MouseEvent<HTMLElement>) => {
+    e.stopPropagation();
+    const url = `${window.location.origin}/post/${postId}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success('Tautan berhasil disalin');
+    } catch (error) {
+      toast.error('Gagal menyalin tautan. Silakan coba lagi nanti');
+    }
+  };
+
+  const handleDelete = async (e: React.MouseEvent<HTMLElement>) => {
+    e.stopPropagation();
+    if (!confirm('Apakah anda yakin ingin menghapus postingan ini?')) return;
+
+    try {
+      await api.delete(`/posts/${postId}`);
+      toast.success('Postingan berhasil dihapus');
+      window.location.reload();
+    } catch (error) {
+      toast.error('Gagal menghapus postingan. Silakan coba lagi nanti.');
+    }
   };
 
   const isXs = useMediaQuery('(max-width: 30rem)');
@@ -113,27 +177,31 @@ export default function PostAction({
               </DrawerHeader>
 
               <div className="flex flex-col gap-6 py-6">
+                {!isMine && (
+                  <button
+                    className="flex items-center gap-4 text-left font-bold"
+                    onClick={handleFollow}
+                  >
+                    <UserPlus size={16} />
+                    {isFollowed ? 'Berhenti mengikuti' : 'Ikuti user'}
+                  </button>
+                )}
                 <button
                   className="flex items-center gap-4 text-left font-bold"
-                  onClick={stopPropagation}
-                >
-                  <UserPlus size={16} />
-                  Follow user
-                </button>
-                <button
-                  className="flex items-center gap-4 text-left font-bold"
-                  onClick={stopPropagation}
+                  onClick={handleCopyLink}
                 >
                   <Copy size={16} />
-                  Copy link
+                  Salin tautan
                 </button>
-                <button
-                  className="flex items-center gap-4 text-left font-bold text-red-600"
-                  onClick={stopPropagation}
-                >
-                  <Trash size={16} />
-                  Delete post
-                </button>
+                {isMine && (
+                  <button
+                    className="flex items-center gap-4 text-left font-bold text-red-600"
+                    onClick={handleDelete}
+                  >
+                    <Trash size={16} />
+                    Hapus postingan
+                  </button>
+                )}
               </div>
             </DrawerContent>
           </Drawer>
@@ -153,28 +221,32 @@ export default function PostAction({
               align="end"
               onCloseAutoFocus={(e) => e.preventDefault()}
             >
+              {!isMine && (
+                <DropdownMenuItem
+                  className="flex items-center gap-2 px-3 py-2 font-bold"
+                  onClick={handleFollow}
+                >
+                  <UserPlus size={16} />
+                  {isFollowed ? 'Berhenti mengikuti' : 'Ikuti user'}
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem
                 className="flex items-center gap-2 px-3 py-2 font-bold"
-                onClick={stopPropagation}
-              >
-                <UserPlus size={16} />
-                Follow user
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="flex items-center gap-2 px-3 py-2 font-bold"
-                onClick={stopPropagation}
+                onClick={handleCopyLink}
               >
                 <Copy size={16} />
-                Copy link
+                Salin tautan
               </DropdownMenuItem>
-              <DropdownMenuItem
-                className="flex items-center gap-2 px-3 py-2 font-bold"
-                variant="destructive"
-                onClick={stopPropagation}
-              >
-                <Trash size={16} />
-                Delete post
-              </DropdownMenuItem>
+              {isMine && (
+                <DropdownMenuItem
+                  className="flex items-center gap-2 px-3 py-2 font-bold"
+                  variant="destructive"
+                  onClick={handleDelete}
+                >
+                  <Trash size={16} />
+                  Hapus postingan
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         )}

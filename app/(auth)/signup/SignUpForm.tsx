@@ -37,7 +37,8 @@ export const formSchema = z
       .string()
       .max(100, { message: 'Password tidak boleh lebih dari 100 karakter' })
       .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/, {
-        message: 'Minimal 8 karakter, huruf besar, huruf kecil, angka, dan simbol',
+        message:
+          'Minimal 8 karakter, huruf besar, huruf kecil, angka, dan simbol',
       }),
 
     passwordConfirmation: z
@@ -83,13 +84,13 @@ export default function SignUpForm() {
         password_confirmation: data.passwordConfirmation,
       });
 
-      toast.success('Pendaftaran berhasil');
+      toast.success('Pendaftaran berhasil. Selamat datang :)');
       router.push('/feed');
     } catch (error) {
       if (error instanceof AxiosError) {
         toast.error(
           error.response?.data?.message ||
-          'Terjadi kesalahan. Silakan coba lagi'
+            'Terjadi kesalahan. Silakan coba lagi'
         );
       } else {
         toast.error('Terjadi kesalahan. Silakan coba lagi');
@@ -208,7 +209,6 @@ export default function SignUpForm() {
           {isSubmitting && <Spinner aria-hidden className="inline-block" />}
           Daftar
         </Button>
-
       </div>
     </form>
   );

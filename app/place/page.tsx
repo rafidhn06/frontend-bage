@@ -8,6 +8,7 @@ import NavigationBar from '@/components/NavigationBar';
 import PostItem from '@/components/PostItem';
 import TopBar from '@/components/TopBar';
 import { Button } from '@/components/ui/button';
+import { mockPost } from '@/lib/mockData';
 
 const placeProfile = {
   name: 'Kopi Kenangan Senja',
@@ -82,7 +83,7 @@ export default function PlaceProfilePage() {
 
           <div className="divide-border divide-y divide-solid">
             {mockPosts.map((_, index) => (
-              <PostItem key={index} />
+              <PostItem key={index} post={mockPost} />
             ))}
           </div>
         </div>

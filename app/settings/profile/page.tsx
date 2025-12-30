@@ -183,14 +183,7 @@ export default function ProfileSettingsPage() {
     resetFileInput();
   };
 
-  const onSubmit = (data: ProfileFormValues) => {
-    console.log({
-      ...data,
-      profileImage: croppedImage,
-    });
-
-    alert('Profile updated!');
-  };
+  const onSubmit = (data: ProfileFormValues) => {};
 
   return (
     <>

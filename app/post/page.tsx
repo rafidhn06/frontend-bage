@@ -240,8 +240,13 @@ function PostDetail() {
 
       <div className="border-t-border border-t border-solid pt-4">
         <PostAction
+          postId={11}
+          authorId={1}
+          authorUsername="johndoe"
+          isMine={true}
           initialLikes={mockPostData.likes}
           initialIsLiked={mockPostData.isLiked}
+          initialIsFollowed={false}
           repliesCount={mockPostData.replies}
           stopPropagation={stopPropagation}
         />
@@ -258,8 +263,6 @@ function CommentInput() {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (isButtonDisabled) return;
-
-    console.log('Komentar dikirim:', commentText);
 
     setCommentText('');
   };
@@ -392,8 +395,13 @@ function CommentItem({ comment }: CommentItemProps) {
       </div>
 
       <PostAction
+        postId={0}
+        authorId={0}
+        authorUsername={comment.user.handle}
+        isMine={false}
         initialLikes={initialLikes}
         initialIsLiked={initialIsLiked}
+        initialIsFollowed={false}
         repliesCount={repliesCount}
         stopPropagation={stopPropagation}
       />

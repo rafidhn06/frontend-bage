@@ -19,13 +19,19 @@ import {
 } from '@/components/ui/carousel';
 
 import PostAction from './PostAction';
+import { formatTimestamp } from '../lib/utils';
+import { Post } from '../types';
 
-export default function PostItem() {
+interface PostItemProps {
+  post: Post;
+}
+
+export default function PostItem({ post }: PostItemProps) {
   const router = useRouter();
 
   const handlePostClick = (event: React.MouseEvent<HTMLElement>) => {
     event.stopPropagation();
-    router.push('/post');
+    router.push(`/post/${post.id}`);
   };
 
   const stopPropagation = (e: React.MouseEvent<HTMLElement>) => {
@@ -50,13 +56,7 @@ export default function PostItem() {
     };
   }, [api]);
 
-  const images: string[] = [
-    '/picsum_random_1.jpg',
-    '/picsum_random_2.jpg',
-    '/picsum_random_3.jpg',
-    '/picsum_random_4.jpg',
-  ];
-
+  const images = post.media.map((m) => m.url);
   const imagesCount = images.length;
 
   const getGridClass = (index: number) => {
@@ -83,7 +83,6 @@ export default function PostItem() {
 
   const [open, setOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [liked, setLiked] = useState(false);
 
   const openModalAndStopPropagation = (
     e: React.MouseEvent<HTMLButtonElement>,
@@ -110,12 +109,6 @@ export default function PostItem() {
     }
   }, [open]);
 
-  const mockPostData = {
-    likes: 62,
-    isLiked: liked,
-    replies: 1283,
-  };
-
   return (
     <article
       className="has-[button:focus-visible]:bg-accent/40 has-[a:focus-visible]:bg-accent/40 hover:bg-accent/40 focus-visible:bg-accent/40 flex w-full cursor-pointer flex-col gap-4 px-4 py-6 transition-colors"
@@ -124,79 +117,87 @@ export default function PostItem() {
     >
       <div className="flex items-center gap-3">
         <Avatar className="size-9">
-          <AvatarImage asChild src="https://github.com/shadcn.png">
+          <AvatarImage asChild src={post.user.profile_picture || undefined}>
             <Link
-              href="/profile"
+              href={`/profile/${post.user.username}`}
               onClick={stopPropagation}
               className="transition-[filter] select-none hover:brightness-80 focus:brightness-80"
             >
               <Image
-                src="https://github.com/shadcn.png"
-                alt="Go to profile page"
+                src={post.user.profile_picture || ''}
+                alt={`Kunjungi profil ${post.user.username}`}
                 width={36}
                 height={36}
+                unoptimized
               />
             </Link>
           </AvatarImage>
-          <AvatarFallback>JD</AvatarFallback>
+          <AvatarFallback>{post.user.name.charAt(0)}</AvatarFallback>
         </Avatar>
 
         <div className="flex w-full max-w-[calc(100%-48px)] flex-col gap-1">
           <div className="flex w-full gap-1">
             <div className="flex w-full min-w-0 flex-1 gap-1">
               <Link
-                href="/profile"
+                href={`/profile/${post.user.username}`}
                 onClick={stopPropagation}
                 className="truncate text-sm font-semibold hover:underline focus:underline focus:outline-none"
               >
-                John Doe
+                {post.user.name}
               </Link>
               <span className="text-muted-foreground flex-1 truncate text-sm">
-                @johndoe
+                @{post.user.username}
               </span>
             </div>
-            <span className="text-muted-foreground text-sm">23s</span>
+            <span className="text-muted-foreground text-sm">
+              {formatTimestamp(post.created_at)}
+            </span>
           </div>
 
-          <Link
-            href="/place"
-            onClick={stopPropagation}
-            className="w-fit text-sm hover:underline focus:underline focus:outline-none"
-          >
-            Kebun Raya Bogor
-          </Link>
+          {post.location && (
+            <Link
+              href={`/location/${post.location.id}`}
+              onClick={stopPropagation}
+              className="w-fit text-sm hover:underline focus:underline focus:outline-none"
+            >
+              {post.location.name}
+            </Link>
+          )}
         </div>
       </div>
       <div className="flex gap-2">
-        {Array.from({ length: 5 }).map((_, i) => (
+        {Array.from({ length: post.rating }).map((_, i) => (
           <Star key={i} size={16} className="fill-yellow-300 text-yellow-300" />
         ))}
       </div>
 
-      <span className="text-sm">Lorem ipsum dolor sit amet consectur</span>
+      <span className="text-sm">{post.content}</span>
 
-      <div className="has-[button:focus-visible]:ring-ring/50 grid aspect-[16/9] grid-cols-2 grid-rows-2 gap-1 overflow-hidden rounded-xl transition-colors select-none has-[button:focus-visible]:ring-2">
-        {images.map((src, i) => (
-          <button
-            key={i}
-            className={`cursor-pointer transition-[filter] hover:brightness-80 focus-visible:brightness-80 ${getGridClass(i)}`}
-            onClick={(e) =>
-              openModalAndStopPropagation(
-                e as React.MouseEvent<HTMLButtonElement>,
-                i
-              )
-            }
-          >
-            <Image
-              src={src}
-              alt={`Image ${i + 1}`}
-              width={600}
-              height={600}
-              className="h-full w-full object-cover"
-            />
-          </button>
-        ))}
-      </div>
+      {imagesCount > 0 && (
+        <div className="has-[button:focus-visible]:ring-ring/50 grid aspect-[16/9] grid-cols-2 grid-rows-2 gap-1 overflow-hidden rounded-xl transition-colors select-none has-[button:focus-visible]:ring-2">
+          {images.map((src, i) => (
+            <button
+              key={i}
+              className={`cursor-pointer transition-[filter] hover:brightness-80 focus-visible:brightness-80 ${getGridClass(i)}`}
+              onClick={(e) =>
+                openModalAndStopPropagation(
+                  e as React.MouseEvent<HTMLButtonElement>,
+                  i
+                )
+              }
+            >
+              <Image
+                src={src}
+                alt={`Gambar ${i + 1}`}
+                width={600}
+                height={600}
+                className="h-full w-full object-cover"
+                unoptimized
+              />
+            </button>
+          ))}
+        </div>
+      )}
 
       {open && (
         <div
@@ -220,10 +221,11 @@ export default function PostItem() {
                 <CarouselItem key={i}>
                   <Image
                     src={src}
-                    alt={`Image ${i}`}
+                    alt={`Gambar ${i}`}
                     width={800}
                     height={800}
                     className="object-contain select-none"
+                    unoptimized
                   />
                 </CarouselItem>
               ))}
@@ -233,15 +235,20 @@ export default function PostItem() {
           </Carousel>
 
           <div className="text-primary-foreground pointer-events-none fixed top-4 left-0 flex w-dvw justify-center text-sm">
-            Image {current} of {imagesCount}
+            Gambar {current} dari {imagesCount}
           </div>
         </div>
       )}
 
       <PostAction
-        initialLikes={mockPostData.likes}
-        initialIsLiked={mockPostData.isLiked}
-        repliesCount={mockPostData.replies}
+        postId={post.id}
+        authorId={post.user.id}
+        authorUsername={post.user.username}
+        isMine={post.is_mine}
+        initialLikes={post.total_likes}
+        initialIsLiked={post.is_liked}
+        initialIsFollowed={post.user.is_followed}
+        repliesCount={post.total_comments}
         stopPropagation={stopPropagation}
       />
     </article>

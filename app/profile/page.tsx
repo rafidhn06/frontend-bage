@@ -11,6 +11,7 @@ import PostItem from '@/components/PostItem';
 import TopBar from '@/components/TopBar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { mockPost } from '@/lib/mockData';
 
 const userProfile = {
   fullName: 'John Doe',
@@ -115,7 +116,7 @@ export default function ProfilePage() {
 
           <div className="divide-border divide-y divide-solid">
             {mockPosts.map((_, index) => (
-              <PostItem key={index} />
+              <PostItem key={index} post={mockPost} />
             ))}
           </div>
         </div>

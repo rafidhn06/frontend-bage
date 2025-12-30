@@ -55,13 +55,13 @@ export default function LoginForm() {
         password: data.password,
       });
 
-      toast.success('Login berhasil');
+      toast.success('Berhasil masuk! Selamat datang :)');
       router.push('/feed');
     } catch (error) {
       if (error instanceof AxiosError) {
         toast.error(
           error.response?.data?.message ||
-          'Terjadi kesalahan. Silakan coba lagi'
+            'Terjadi kesalahan. Silakan coba lagi'
         );
       } else {
         toast.error('Terjadi kesalahan. Silakan coba lagi');

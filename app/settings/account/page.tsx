@@ -64,8 +64,6 @@ export default function AccountSettingsPage() {
 
   const onSubmit = async (data: AccountFormValues) => {
     try {
-      // Replace with your API call
-      console.log('Submitting account settings', data);
       toast('Success', { description: 'Account updated successfully' });
       reset({
         ...data,

@@ -13,7 +13,6 @@ export default function AuthLayout({
         <Branding />
         {children}
       </main>
-      <Toaster richColors position="top-right" />
     </>
   );
 }

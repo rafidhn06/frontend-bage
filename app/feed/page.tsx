@@ -29,7 +29,6 @@ import { Spinner } from '@/components/ui/spinner';
 import api from '@/lib/axios';
 import { Post, User } from '@/types';
 
-// Cache to persist data across navigation but reset on reload
 const feedCache: Record<string, { posts: Post[]; page: number; hasMore: boolean }> = {};
 
 import { useIntersectionObserver } from '@/hooks/useIntersectionObserver';
@@ -42,6 +41,8 @@ export default function FeedPage() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
+  const [isRestored, setIsRestored] = useState(false);
+
   const [ref, isIntersecting] = useIntersectionObserver({
     threshold: 0.5,
   });
@@ -51,6 +52,10 @@ export default function FeedPage() {
       setPage((prev) => prev + 1);
     }
   }, [isIntersecting, hasMore, loading]);
+
+  useEffect(() => {
+    setIsRestored(false);
+  }, [selectedOption]);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -80,15 +85,16 @@ export default function FeedPage() {
   }, [selectedOption]);
 
   useEffect(() => {
-    if (!loading && posts.length > 0) {
+    if (!loading && posts.length > 0 && !isRestored) {
       const savedPosition = sessionStorage.getItem(
         `scroll_position_${selectedOption}`
       );
       if (savedPosition) {
         window.scrollTo(0, parseInt(savedPosition, 10));
       }
+      setIsRestored(true);
     }
-  }, [selectedOption]);
+  }, [loading, posts, selectedOption, isRestored]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -105,7 +111,6 @@ export default function FeedPage() {
   const fetchPosts = async (currentPage: number, isLoadMore: boolean = false) => {
     const type = selectedOption === 'Saran' ? 'fyp' : 'following';
 
-    // If not loading more (initial load), check cache
     if (!isLoadMore) {
       if (feedCache[type]) {
         setPosts(feedCache[type].posts);
@@ -124,9 +129,17 @@ export default function FeedPage() {
       const meta = response.data.meta;
 
       setPosts((prev) => {
-        const updatedPosts = isLoadMore ? [...prev, ...newPosts] : newPosts;
+        const uniqueIncomingPosts = Array.from(new Map(newPosts.map((p: Post) => [p.id, p])).values()) as Post[];
 
-        // Update cache
+        let updatedPosts: Post[];
+        if (isLoadMore) {
+          const existingIds = new Set(prev.map((p) => p.id));
+          const uniqueNewPosts = uniqueIncomingPosts.filter((p: Post) => !existingIds.has(p.id));
+          updatedPosts = [...prev, ...uniqueNewPosts];
+        } else {
+          updatedPosts = uniqueIncomingPosts;
+        }
+
         feedCache[type] = {
           posts: updatedPosts,
           page: currentPage,
@@ -145,7 +158,6 @@ export default function FeedPage() {
     }
   };
 
-  // Initial load
   useEffect(() => {
     setPosts([]);
     setPage(1);
@@ -153,7 +165,6 @@ export default function FeedPage() {
     fetchPosts(1, false);
   }, [selectedOption]);
 
-  // Load more trigger
   useEffect(() => {
     if (page > 1) {
       fetchPosts(page, true);
@@ -220,22 +231,30 @@ export default function FeedPage() {
 
       <main className="xs:pb-[78px] flex items-center justify-center divide-y divide-solid pb-[81px]">
         <div className="divide-border flex w-full max-w-xl flex-col divide-y divide-solid">
-          {posts.map((post) => <PostItem key={post.id} post={post} />)}
-
-          {loading && (
-            <div className="flex w-full items-center justify-center p-4">
+          {loading && posts.length === 0 ? (
+            <div className="flex h-[calc(100dvh-150px)] w-full items-center justify-center">
               <Spinner className="size-8" />
             </div>
-          )}
+          ) : (
+            <>
+              {posts.map((post) => (
+                <PostItem key={post.id} post={post} />
+              ))}
 
-          {!loading && hasMore && (
-            <div ref={ref} className="h-4 w-full" />
-          )}
+              {loading && (
+                <div className="flex w-full items-center justify-center p-8">
+                  <Spinner className="size-8" />
+                </div>
+              )}
 
-          {!loading && posts.length === 0 && (
-            <div className="text-muted-foreground flex h-[calc(100dvh-150px)] w-full items-center justify-center">
-              Belum ada unggahan
-            </div>
+              {!loading && hasMore && <div ref={ref} className="h-4 w-full" />}
+
+              {!loading && posts.length === 0 && (
+                <span className="text-muted-foreground flex h-[calc(100dvh-150px)] w-full items-center justify-center">
+                  Belum ada unggahan
+                </span>
+              )}
+            </>
           )}
         </div>
       </main>

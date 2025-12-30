@@ -149,10 +149,16 @@ function SearchContent() {
       }
 
       setDataState(prev => {
-        // If filter changed during fetch, ignore result (safety check)
-        // But we are in useEffect closure, 'f' is closed over.
-        // Best to just use consistent state.
-        const finalResults = append ? [...prev.results, ...data] : data;
+        const uniqueIncomingData = Array.from(new Map(data.map((item: any) => [item.id, item])).values());
+
+        let finalResults;
+        if (append) {
+          const existingIds = new Set(prev.results.map((item: any) => item.id));
+          const uniqueNewData = uniqueIncomingData.filter((item: any) => !existingIds.has(item.id));
+          finalResults = [...prev.results, ...uniqueNewData];
+        } else {
+          finalResults = uniqueIncomingData;
+        }
 
         cacheRef.current[f] = {
           results: finalResults,
@@ -181,8 +187,6 @@ function SearchContent() {
   };
 
   useEffect(() => {
-    // Reset state on tab change/query change handled by internal logic?
-    // fetchData handles cache check.
     fetchData(1, false);
   }, [debouncedQuery, f]);
 

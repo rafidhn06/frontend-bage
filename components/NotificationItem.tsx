@@ -136,7 +136,7 @@ export default function NotificationItem({
 
                     {type === 'comment' && data.comment_content && (
                         <span className="text-foreground line-clamp-2 text-sm italic">
-                            "{data.comment_content}"
+                            {data.comment_content}
                         </span>
                     )}
                 </div>

@@ -26,7 +26,6 @@ const markerIcon = new L.Icon({
   iconAnchor: [12, 41],
 });
 
-// Helper component: otomatis fly map ke posisi marker
 function FlyToPosition({
   center,
   position,
@@ -47,7 +46,6 @@ function FlyToPosition({
   return null;
 }
 
-// Tangkap klik map
 function LocationPicker({
   onSelect,
 }: {

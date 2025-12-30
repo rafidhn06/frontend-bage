@@ -17,8 +17,10 @@ import {
   InputGroupAddon,
   InputGroupInput,
 } from '@/components/ui/input-group';
-import api from '@/lib/axios';
 import { Spinner } from '@/components/ui/spinner';
+import api from '@/lib/axios';
+
+import { useIntersectionObserver } from '@/hooks/useIntersectionObserver';
 
 function SearchContent() {
   const searchParams = useSearchParams();
@@ -29,21 +31,39 @@ function SearchContent() {
   const [query, setQuery] = useState(initialQuery);
   const [debouncedQuery, setDebouncedQuery] = useState(initialQuery);
 
-  const [dataState, setDataState] = useState<{ filter: string; results: any[] }>({
+  const [dataState, setDataState] = useState<{
+    filter: string;
+    results: any[];
+    hasMore: boolean;
+    page: number;
+  }>({
     filter: f,
-    results: []
+    results: [],
+    hasMore: true,
+    page: 1,
   });
 
   const [loading, setLoading] = useState(!!initialQuery);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   const cacheRef = useRef<{
     [key: string]: {
       results: any[];
       scroll: number;
-    }
+      hasMore: boolean;
+      page: number;
+    };
   }>({});
 
   const currentQueryRef = useRef(initialQuery);
+
+  const [ref, isIntersecting] = useIntersectionObserver({ threshold: 0.5 });
+
+  useEffect(() => {
+    if (isIntersecting && dataState.hasMore && !loading && !loadingMore && dataState.filter === f) {
+      fetchData(dataState.page + 1, true);
+    }
+  }, [isIntersecting, dataState.hasMore, loading, loadingMore, dataState.filter, f]);
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -65,60 +85,105 @@ function SearchContent() {
     const scrollY = window.scrollY;
     if (!cacheRef.current[f]) {
       if (dataState.filter === f) {
-        cacheRef.current[f] = { results: dataState.results, scroll: scrollY };
+        cacheRef.current[f] = {
+          results: dataState.results,
+          scroll: scrollY,
+          hasMore: dataState.hasMore,
+          page: dataState.page
+        };
       }
     } else {
       cacheRef.current[f].scroll = scrollY;
     }
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!debouncedQuery) {
-        setDataState({ filter: f, results: [] });
-        return;
-      }
+  const fetchData = async (currentPage: number = 1, append: boolean = false) => {
+    if (!debouncedQuery) {
+      setDataState({ filter: f, results: [], hasMore: false, page: 1 });
+      return;
+    }
 
+    if (append) {
+      setLoadingMore(true);
+    } else {
       setLoading(true);
+    }
 
-      if (cacheRef.current[f]) {
-        setDataState({ filter: f, results: cacheRef.current[f].results });
-        setLoading(false);
-        return;
+    if (!append && cacheRef.current[f]) {
+      const cached = cacheRef.current[f];
+      setDataState({
+        filter: f,
+        results: cached.results,
+        hasMore: cached.hasMore,
+        page: cached.page
+      });
+      setLoading(false);
+      setLoadingMore(false);
+      return;
+    }
+
+    try {
+      let data: any[] = [];
+      const encodedQ = encodeURIComponent(debouncedQuery);
+      const pageParam = `&page=${currentPage}`;
+
+      let res;
+      if (f === 'top') {
+        res = await api.get(`/posts/search?search=${encodedQ}&sort=top${pageParam}`);
+      } else if (f === 'latest') {
+        res = await api.get(`/posts/search?search=${encodedQ}&sort=latest${pageParam}`);
+      } else if (f === 'media') {
+        res = await api.get(`/posts/search?search=${encodedQ}&type=media${pageParam}`);
+      } else if (f === 'people') {
+        res = await api.get(`/users?search=${encodedQ}${pageParam}`);
+      } else if (f === 'places') {
+        res = await api.get(`/locations?search=${encodedQ}${pageParam}`);
       }
 
-      try {
-        let data: any[] = [];
-        const encodedQ = encodeURIComponent(debouncedQuery);
+      let hasMorePages = false;
 
-        let res;
-        if (f === 'top') {
-          res = await api.get(`/posts/search?search=${encodedQ}&sort=top`);
-        } else if (f === 'latest') {
-          res = await api.get(`/posts/search?search=${encodedQ}&sort=latest`);
-        } else if (f === 'media') {
-          res = await api.get(`/posts/search?search=${encodedQ}&type=media`);
-        } else if (f === 'people') {
-          res = await api.get(`/users?search=${encodedQ}`);
-        } else if (f === 'places') {
-          res = await api.get(`/locations?search=${encodedQ}`);
-        }
-
-        if (res && res.data) {
-          data = res.data.data;
-        }
-
-        setDataState({ filter: f, results: data });
-        cacheRef.current[f] = { results: data, scroll: 0 };
-      } catch (error) {
-        console.error(error);
-        setDataState({ filter: f, results: [] });
-      } finally {
-        setLoading(false);
+      if (res && res.data) {
+        data = res.data.data;
+        const meta = res.data.meta;
+        hasMorePages = meta ? meta.current_page < meta.last_page : false;
       }
-    };
 
-    fetchData();
+      setDataState(prev => {
+        // If filter changed during fetch, ignore result (safety check)
+        // But we are in useEffect closure, 'f' is closed over.
+        // Best to just use consistent state.
+        const finalResults = append ? [...prev.results, ...data] : data;
+
+        cacheRef.current[f] = {
+          results: finalResults,
+          scroll: append ? window.scrollY : 0,
+          hasMore: hasMorePages,
+          page: currentPage
+        };
+
+        return {
+          filter: f,
+          results: finalResults,
+          hasMore: hasMorePages,
+          page: currentPage
+        };
+      });
+
+    } catch (error) {
+      console.error(error);
+      if (!append) {
+        setDataState({ filter: f, results: [], hasMore: false, page: 1 });
+      }
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
+  useEffect(() => {
+    // Reset state on tab change/query change handled by internal logic?
+    // fetchData handles cache check.
+    fetchData(1, false);
   }, [debouncedQuery, f]);
 
   useLayoutEffect(() => {
@@ -196,7 +261,8 @@ function SearchContent() {
               Mulai Mencari
             </span>
             <span className="text-muted-foreground">
-              Masukkan kata kunci di kolom pencarian di atas untuk menemukan hasil.
+              Masukkan kata kunci di kolom pencarian di atas untuk menemukan
+              hasil.
             </span>
           </div>
         </div>
@@ -209,7 +275,9 @@ function SearchContent() {
                 <Spinner className="size-8" />
               </div>
             ) : displayResults.length === 0 ? (
-              <span className="flex h-[calc(100dvh-250px)] w-full items-center justify-center text-muted-foreground">Tidak ada hasil ditemukan.</span>
+              <span className="text-muted-foreground flex h-[calc(100dvh-250px)] w-full items-center justify-center">
+                Tidak ada hasil ditemukan
+              </span>
             ) : (
               <>
                 {displayResults.map((item: any) => {
@@ -221,6 +289,12 @@ function SearchContent() {
                     return <PostItem key={item.id} post={item} />;
                   }
                 })}
+
+                {dataState.hasMore && (
+                  <div ref={ref} className="flex justify-center p-4">
+                    {loadingMore && <Spinner className="size-6" />}
+                  </div>
+                )}
               </>
             )}
           </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useRef, useEffect, useState } from 'react';
 
 // import type { Metadata } from 'next';
 import Image from 'next/image';
@@ -29,17 +29,36 @@ import { Spinner } from '@/components/ui/spinner';
 import api from '@/lib/axios';
 import { Post, User } from '@/types';
 
+// Cache to persist data across navigation but reset on reload
+const feedCache: Record<string, { posts: Post[]; page: number; hasMore: boolean }> = {};
+
+import { useIntersectionObserver } from '@/hooks/useIntersectionObserver';
+
 export default function FeedPage() {
   const [selectedOption, setSelectedOption] = useState('Saran');
   const [posts, setPosts] = useState<Post[]>([]);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+
+  const [ref, isIntersecting] = useIntersectionObserver({
+    threshold: 0.5,
+  });
+
+  useEffect(() => {
+    if (isIntersecting && hasMore && !loading) {
+      setPage((prev) => prev + 1);
+    }
+  }, [isIntersecting, hasMore, loading]);
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const response = await api.get('/user');
-        setUser(response.data);
+        if (response.data) {
+          setUser(response.data);
+        }
       } catch (error) {
         toast.error('Gagal memuat profil pengguna. Silahkan coba lagi nanti.');
       }
@@ -69,7 +88,7 @@ export default function FeedPage() {
         window.scrollTo(0, parseInt(savedPosition, 10));
       }
     }
-  }, [loading, posts, selectedOption]);
+  }, [selectedOption]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -83,35 +102,63 @@ export default function FeedPage() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [selectedOption]);
 
-  const fetchPosts = async () => {
+  const fetchPosts = async (currentPage: number, isLoadMore: boolean = false) => {
     const type = selectedOption === 'Saran' ? 'fyp' : 'following';
-    const cacheKey = `feed_posts_${type}`;
-    const cachedPosts = sessionStorage.getItem(cacheKey);
 
-    if (cachedPosts) {
-      setPosts(JSON.parse(cachedPosts));
-      setLoading(false);
-    } else {
-      setLoading(true);
+    // If not loading more (initial load), check cache
+    if (!isLoadMore) {
+      if (feedCache[type]) {
+        setPosts(feedCache[type].posts);
+        setPage(feedCache[type].page);
+        setHasMore(feedCache[type].hasMore);
+        setLoading(false);
+        return;
+      }
     }
 
+    setLoading(true);
+
     try {
-      const response = await api.get(`/feed?type=${type}`);
+      const response = await api.get(`/feed?type=${type}&page=${currentPage}`);
       const newPosts = response.data.data;
-      setPosts(newPosts);
-      sessionStorage.setItem(cacheKey, JSON.stringify(newPosts));
+      const meta = response.data.meta;
+
+      setPosts((prev) => {
+        const updatedPosts = isLoadMore ? [...prev, ...newPosts] : newPosts;
+
+        // Update cache
+        feedCache[type] = {
+          posts: updatedPosts,
+          page: currentPage,
+          hasMore: meta.current_page < meta.last_page
+        };
+
+        return updatedPosts;
+      });
+
+      setHasMore(meta.current_page < meta.last_page);
+
     } catch (error) {
-      if (!cachedPosts) {
-        toast.error('Gagal memuat unggahan. Silakan coba lagi nanti.');
-      }
+      toast.error('Gagal memuat unggahan. Silakan coba lagi nanti.');
     } finally {
       setLoading(false);
     }
   };
 
+  // Initial load
   useEffect(() => {
-    fetchPosts();
+    setPosts([]);
+    setPage(1);
+    setHasMore(true);
+    fetchPosts(1, false);
   }, [selectedOption]);
+
+  // Load more trigger
+  useEffect(() => {
+    if (page > 1) {
+      fetchPosts(page, true);
+    }
+  }, [page]);
 
   return (
     <>
@@ -164,7 +211,7 @@ export default function FeedPage() {
                 </Link>
               </AvatarImage>
               <AvatarFallback>
-                {user.username.charAt(0).toUpperCase()}
+                {user.username?.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
           )}
@@ -173,13 +220,19 @@ export default function FeedPage() {
 
       <main className="xs:pb-[78px] flex items-center justify-center divide-y divide-solid pb-[81px]">
         <div className="divide-border flex w-full max-w-xl flex-col divide-y divide-solid">
-          {loading ? (
-            <div className="flex h-[calc(100dvh-150px)] w-full items-center justify-center">
+          {posts.map((post) => <PostItem key={post.id} post={post} />)}
+
+          {loading && (
+            <div className="flex w-full items-center justify-center p-4">
               <Spinner className="size-8" />
             </div>
-          ) : posts.length > 0 ? (
-            posts.map((post) => <PostItem key={post.id} post={post} />)
-          ) : (
+          )}
+
+          {!loading && hasMore && (
+            <div ref={ref} className="h-4 w-full" />
+          )}
+
+          {!loading && posts.length === 0 && (
             <div className="text-muted-foreground flex h-[calc(100dvh-150px)] w-full items-center justify-center">
               Belum ada unggahan
             </div>

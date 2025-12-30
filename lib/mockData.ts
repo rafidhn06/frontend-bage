@@ -20,7 +20,7 @@ export const mockPost: Post = {
         id: 1,
         name: 'John Doe',
         username: 'johndoe',
-        profile_picture: 'https://github.com/shadcn.png',
+        profile_picture_url: 'https://github.com/shadcn.png',
         is_followed: false,
     },
     location: {

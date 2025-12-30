@@ -139,10 +139,10 @@ export default function PostPage({
               <Avatar className="size-9">
                 <AvatarImage
                   asChild
-                  src={currentUser.profile_picture || undefined}
+                  src={currentUser.profile_picture_url || undefined}
                 >
                   <Image
-                    src={currentUser.profile_picture || ''}
+                    src={currentUser.profile_picture_url || ''}
                     alt={currentUser.username}
                     width={36}
                     height={36}

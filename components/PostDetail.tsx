@@ -112,14 +112,14 @@ export default function PostDetail({ post, onUpdate }: PostDetailProps) {
     >
       <div className="flex items-center gap-3">
         <Avatar className="size-9">
-          <AvatarImage asChild src={post.user.profile_picture || undefined}>
+          <AvatarImage asChild src={post.user.profile_picture_url || undefined}>
             <Link
               href={`/profile/${post.user.username}`}
               onClick={stopPropagation}
               className="transition-[filter] select-none hover:brightness-80 focus:brightness-80"
             >
               <Image
-                src={post.user.profile_picture || ''}
+                src={post.user.profile_picture_url || ''}
                 alt={`Kunjungi profil ${post.user.username}`}
                 width={36}
                 height={36}

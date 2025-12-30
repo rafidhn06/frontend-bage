@@ -1,12 +1,30 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 import { Bell, Home, Plus, Search, User } from 'lucide-react';
 
+import api from '@/lib/axios';
+import { toast } from 'sonner';
+
 export default function NavigationBar() {
   const pathname = usePathname();
+  const [username, setUsername] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await api.get('/user');
+        setUsername(response.data.username);
+      } catch (error) {
+        toast.error('Gagal memuat data pengguna. Silakan coba lagi nanti.');
+      }
+    };
+    fetchUser();
+  }, []);
+
   const isActive = (route: string) => pathname.startsWith(route);
 
   return (
@@ -15,11 +33,10 @@ export default function NavigationBar() {
         <Link
           href="/feed"
           aria-label="Go to feed"
-          className={`hover:bg-accent focus:bg-accent xs:px-3 xs:py-2 w-fit cursor-pointer rounded-lg px-4 py-3 transition-[background-color] ${
-            isActive('/feed')
-              ? 'bg-accent text-foreground'
-              : 'text-muted-foreground'
-          }`}
+          className={`hover:bg-accent focus:bg-accent xs:px-3 xs:py-2 w-fit cursor-pointer rounded-lg px-4 py-3 transition-[background-color] ${isActive('/feed')
+            ? 'bg-accent text-foreground'
+            : 'text-muted-foreground'
+            }`}
         >
           <Home size={20} />
         </Link>
@@ -27,11 +44,10 @@ export default function NavigationBar() {
         <Link
           href="/search"
           aria-label="Search"
-          className={`hover:bg-accent focus:bg-accent xs:px-3 xs:py-2 w-fit cursor-pointer rounded-lg px-4 py-3 transition-[background-color] ${
-            isActive('/search')
-              ? 'bg-accent text-foreground'
-              : 'text-muted-foreground'
-          }`}
+          className={`hover:bg-accent focus:bg-accent xs:px-3 xs:py-2 w-fit cursor-pointer rounded-lg px-4 py-3 transition-[background-color] ${isActive('/search')
+            ? 'bg-accent text-foreground'
+            : 'text-muted-foreground'
+            }`}
         >
           <Search size={20} />
         </Link>
@@ -39,23 +55,21 @@ export default function NavigationBar() {
         <Link
           href="/notifications"
           aria-label="Notifications"
-          className={`hover:bg-accent focus:bg-accent xs:px-3 xs:py-2 w-fit cursor-pointer rounded-lg px-4 py-3 transition-[background-color] ${
-            isActive('/notifications')
-              ? 'bg-accent text-foreground'
-              : 'text-muted-foreground'
-          }`}
+          className={`hover:bg-accent focus:bg-accent xs:px-3 xs:py-2 w-fit cursor-pointer rounded-lg px-4 py-3 transition-[background-color] ${isActive('/notifications')
+            ? 'bg-accent text-foreground'
+            : 'text-muted-foreground'
+            }`}
         >
           <Bell size={20} />
         </Link>
 
         <Link
-          href="/profile"
+          href={username ? `/profile/${username}` : '/profile'}
           aria-label="Profile"
-          className={`hover:bg-accent focus:bg-accent xs:px-3 xs:py-2 w-fit cursor-pointer rounded-lg px-4 py-3 transition-[background-color] ${
-            isActive('/profile')
-              ? 'bg-accent text-foreground font-bold'
-              : 'text-muted-foreground'
-          }`}
+          className={`hover:bg-accent focus:bg-accent xs:px-3 xs:py-2 w-fit cursor-pointer rounded-lg px-4 py-3 transition-[background-color] ${isActive('/profile')
+            ? 'bg-accent text-foreground font-bold'
+            : 'text-muted-foreground'
+            }`}
         >
           <User size={20} />
         </Link>
@@ -63,11 +77,10 @@ export default function NavigationBar() {
         <Link
           href="/create/post"
           aria-label="Create new post"
-          className={`hover:bg-primary/70 focus-visible:bg-primary/70 text-primary-foreground focus-visible:ring-ring/50 focus-visible:border-ring xs:px-3 xs:py-2 w-fit cursor-pointer rounded-lg px-4 py-3 transition outline-none focus-visible:ring-2 ${
-            isActive('/create/post')
-              ? 'bg-primary/70 text-foreground'
-              : 'text-muted-foreground bg-primary'
-          }`}
+          className={`hover:bg-primary/70 focus-visible:bg-primary/70 text-primary-foreground focus-visible:ring-ring/50 focus-visible:border-ring xs:px-3 xs:py-2 w-fit cursor-pointer rounded-lg px-4 py-3 transition outline-none focus-visible:ring-2 ${isActive('/create/post')
+            ? 'bg-primary/70 text-foreground'
+            : 'text-muted-foreground bg-primary'
+            }`}
         >
           <Plus size={20} />
         </Link>

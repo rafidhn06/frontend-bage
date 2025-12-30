@@ -149,13 +149,13 @@ export default function FeedPage() {
         <div className="flex flex-1 justify-end">
           {user && (
             <Avatar className="size-9">
-              <AvatarImage asChild src={user.profile_picture || undefined}>
+              <AvatarImage asChild src={user.profile_picture_url || undefined}>
                 <Link
                   href={`/profile/${user.username}`}
                   className="transition-[filter] select-none hover:brightness-80 focus:brightness-80"
                 >
                   <Image
-                    src={user.profile_picture || ''}
+                    src={user.profile_picture_url || ''}
                     alt="Kunjungi halaman profil"
                     width={36}
                     height={36}

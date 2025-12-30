@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
@@ -54,6 +55,7 @@ export default function PostAction({
   const [liked, setLiked] = useState(initialIsLiked);
   const [likeCount, setLikeCount] = useState(initialLikes);
   const [isFollowed, setIsFollowed] = useState(initialIsFollowed);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const router = useRouter();
 
   const handleCommentClick = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -82,6 +84,7 @@ export default function PostAction({
 
   const handleFollow = async (e: React.MouseEvent<HTMLElement>) => {
     e.stopPropagation();
+    setIsDrawerOpen(false);
     const prevFollowed = isFollowed;
     setIsFollowed(!prevFollowed);
     try {
@@ -100,6 +103,7 @@ export default function PostAction({
 
   const handleCopyLink = async (e: React.MouseEvent<HTMLElement>) => {
     e.stopPropagation();
+    setIsDrawerOpen(false);
     const url = `${window.location.origin}/post/${postId}`;
     try {
       await navigator.clipboard.writeText(url);
@@ -111,19 +115,27 @@ export default function PostAction({
 
   const handleDelete = async (e: React.MouseEvent<HTMLElement>) => {
     e.stopPropagation();
-    if (!confirm('Apakah anda yakin ingin menghapus postingan ini?')) return;
+    setIsDrawerOpen(false);
 
-    try {
-      await api.delete(`/posts/${postId}`);
-      toast.success('Unggahan berhasil dihapus');
-      if (onUpdate) {
-        onUpdate();
-      } else {
-        window.location.reload();
+    // Slight delay to allow drawer to close smoothy before confirm dialog (optional but nice)
+    // But confirm is blocking, so the drawer closing animation might freeze if we don't wait. 
+    // However, react state update is async.
+
+    setTimeout(async () => {
+      if (!confirm('Apakah anda yakin ingin menghapus postingan ini?')) return;
+
+      try {
+        await api.delete(`/posts/${postId}`);
+        toast.success('Unggahan berhasil dihapus');
+        if (onUpdate) {
+          onUpdate();
+        } else {
+          window.location.reload();
+        }
+      } catch (error) {
+        toast.error('Gagal menghapus unggahan. Silakan coba lagi nanti.');
       }
-    } catch (error) {
-      toast.error('Gagal menghapus unggahan. Silakan coba lagi nanti.');
-    }
+    }, 100);
   };
 
   const isXs = useMediaQuery('(max-width: 30rem)');
@@ -149,12 +161,14 @@ export default function PostAction({
         >
           <Heart size={16} />
         </button>
-        <span
-          className={`text-sm peer-hover:text-red-500 ${liked ? 'text-red-500' : 'text-muted-foreground'
+        <Link
+          href={`/post/${postId}/likes`}
+          className={`text-sm hover:underline peer-hover:text-red-500 ${liked ? 'text-red-500' : 'text-muted-foreground'
             }`}
+          onClick={stopPropagation}
         >
           {likeCount}
-        </span>
+        </Link>
       </div>
 
       <div className="flex flex-1 items-center gap-1">
@@ -172,11 +186,14 @@ export default function PostAction({
 
       <div className="flex flex-1 justify-end">
         {isXs ? (
-          <Drawer>
+          <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
             <DrawerTrigger asChild>
               <button
                 aria-label="More options"
-                onClick={stopPropagation}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsDrawerOpen(true);
+                }}
                 className="text-muted-foreground hover:bg-accent focus-visible:bg-accent focus-visible:ring-ring/50 cursor-pointer rounded-sm p-1 transition focus:outline-none focus-visible:ring-2"
               >
                 <Ellipsis size={16} />
@@ -233,6 +250,7 @@ export default function PostAction({
 
             <DropdownMenuContent
               align="end"
+              side='top'
               onCloseAutoFocus={(e) => e.preventDefault()}
             >
               {!isMine && (

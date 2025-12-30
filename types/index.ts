@@ -2,8 +2,9 @@ export interface User {
     id: number;
     name: string;
     username: string;
-    profile_picture: string | null;
+    profile_picture_url: string | null;
     is_followed: boolean;
+    is_mine?: boolean;
 }
 
 export interface Location {

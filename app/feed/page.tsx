@@ -102,7 +102,7 @@ export default function FeedPage() {
               setSelectedOption(value);
             }}
           >
-            <SelectTrigger className="hover:bg-accent w-28 cursor-pointer shadow-none transition-[box-shadow]">
+            <SelectTrigger className="hover:bg-accent w-29 cursor-pointer shadow-none transition-[box-shadow]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent
@@ -160,7 +160,7 @@ export default function FeedPage() {
             posts.map((post) => <PostItem key={post.id} post={post} />)
           ) : (
             <div className="text-muted-foreground flex h-[calc(100dvh-150px)] w-full items-center justify-center">
-              Tidak ada postingan ditemukan
+              Belum ada unggahan
             </div>
           )}
         </div>

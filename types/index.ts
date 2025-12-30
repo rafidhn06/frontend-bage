@@ -42,3 +42,26 @@ export interface Post {
     user: User;
     location: Location | null;
 }
+
+export interface NotificationData {
+    message: string;
+    post_id?: number;
+    location_name?: string;
+    rating?: number;
+    liker_username?: string;
+    liker_avatar?: string | null;
+    commenter_username?: string;
+    commenter_avatar?: string | null;
+    comment_content?: string;
+    follower_id?: number;
+    follower_username?: string;
+    follower_avatar?: string | null;
+}
+
+export interface Notification {
+    id: number;
+    type: 'like' | 'follow' | 'comment';
+    data: NotificationData;
+    read_at: string | null;
+    created_at: string;
+}

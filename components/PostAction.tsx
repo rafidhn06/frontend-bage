@@ -33,6 +33,7 @@ interface PostActionProps {
   initialIsLiked: boolean;
   initialIsFollowed: boolean;
   repliesCount: number;
+  onUpdate?: () => void;
   stopPropagation: (e: React.MouseEvent<HTMLElement>) => void;
 }
 
@@ -45,6 +46,7 @@ export default function PostAction({
   initialIsLiked,
   initialIsFollowed,
   repliesCount,
+  onUpdate,
   stopPropagation,
 }: PostActionProps) {
   const [liked, setLiked] = useState(initialIsLiked);
@@ -62,6 +64,7 @@ export default function PostAction({
 
     try {
       await api.post(`/posts/${postId}/like`);
+      if (onUpdate) onUpdate();
     } catch (error) {
       setLiked(previousLiked);
       setLikeCount(previousLikeCount);
@@ -80,9 +83,10 @@ export default function PostAction({
           ? `Berhenti mengikuti @${authorUsername}`
           : `Mulai mengikuti @${authorUsername}`
       );
+      if (onUpdate) onUpdate();
     } catch (error) {
       setIsFollowed(prevFollowed);
-      toast.error('Gagal mengikuti. Silakan coba lagi nanti.');
+      toast.error('Gagal mengikuti akun. Silakan coba lagi nanti.');
     }
   };
 
@@ -104,9 +108,13 @@ export default function PostAction({
     try {
       await api.delete(`/posts/${postId}`);
       toast.success('Postingan berhasil dihapus');
-      window.location.reload();
+      if (onUpdate) {
+        onUpdate();
+      } else {
+        window.location.reload();
+      }
     } catch (error) {
-      toast.error('Gagal menghapus postingan. Silakan coba lagi nanti.');
+      toast.error('Gagal menghapus unggahan. Silakan coba lagi nanti.');
     }
   };
 
@@ -128,14 +136,16 @@ export default function PostAction({
         <button
           aria-label="Like post"
           onClick={handleLikeClick}
-          className={`peer text-muted-foreground cursor-pointer rounded-sm p-1 transition hover:bg-red-500/10 hover:text-red-500 focus-visible:bg-red-500/10 focus-visible:text-red-500 focus-visible:ring-2 focus-visible:ring-red-300 focus-visible:outline-none ${liked ? 'text-red-500 *:[svg]:fill-red-500' : ''
-            }`}
+          className={`peer text-muted-foreground cursor-pointer rounded-sm p-1 transition hover:bg-red-500/10 hover:text-red-500 focus-visible:bg-red-500/10 focus-visible:text-red-500 focus-visible:ring-2 focus-visible:ring-red-300 focus-visible:outline-none ${
+            liked ? 'text-red-500 *:[svg]:fill-red-500' : ''
+          }`}
         >
           <Heart size={16} />
         </button>
         <span
-          className={`text-sm peer-hover:text-red-500 ${liked ? 'text-red-500' : 'text-muted-foreground'
-            }`}
+          className={`text-sm peer-hover:text-red-500 ${
+            liked ? 'text-red-500' : 'text-muted-foreground'
+          }`}
         >
           {likeCount}
         </span>

@@ -35,24 +35,25 @@ export default function PostPage({
   const [submittingComment, setSubmittingComment] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
+  const fetchData = async () => {
+    try {
+      const [postRes, commentsRes, userRes] = await Promise.all([
+        api.get(`/posts/${resolvedParams.id}`),
+        api.get(`/posts/${resolvedParams.id}/comments`),
+        api.get('/user'),
+      ]);
+      setPost(postRes.data.data);
+      setComments(commentsRes.data.data);
+      setCurrentUser(userRes.data);
+    } catch (error) {
+      toast.error('Gagal memuat unggahan. Silakan coba lagi nanti.');
+      router.push('/feed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [postRes, commentsRes, userRes] = await Promise.all([
-          api.get(`/posts/${resolvedParams.id}`),
-          api.get(`/posts/${resolvedParams.id}/comments`),
-          api.get('/user'),
-        ]);
-        setPost(postRes.data.data);
-        setComments(commentsRes.data.data);
-        setCurrentUser(userRes.data);
-      } catch (error) {
-        toast.error('Gagal memuat postingan. Silakan coba lagi nanti.');
-        router.push('/feed');
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchData();
   }, [resolvedParams.id, router]);
 
@@ -105,7 +106,7 @@ export default function PostPage({
 
       <main className="xs:pb-[78px] flex items-center justify-center pb-[81px]">
         <div className="divide-border flex w-full max-w-xl flex-col divide-y divide-solid">
-          <PostDetail post={post} />
+          <PostDetail post={post} onUpdate={fetchData} />
 
           <div className="flex w-full gap-3 px-4 py-6">
             {currentUser && (

@@ -43,7 +43,7 @@ export default function SettingsPage() {
   const handleLogout = async () => {
     try {
       await api.post('/auth/logout');
-      toast.success('Berhasil keluar (logout)');
+      toast.success('Berhasil keluar');
       router.push('/login');
     } catch (error) {
       toast.error('Gagal keluar. Silakan coba lagi nanti.');

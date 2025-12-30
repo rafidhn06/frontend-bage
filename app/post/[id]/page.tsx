@@ -1,10 +1,10 @@
 'use client';
 
-import { use, useEffect, useState } from 'react';
+import { use, useEffect, useRef, useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 import { ArrowLeft, SendHorizontalIcon } from 'lucide-react';
 import { toast } from 'sonner';
@@ -28,12 +28,38 @@ export default function PostPage({
 }) {
   const resolvedParams = use(params);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [post, setPost] = useState<Post | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
   const [commentText, setCommentText] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    if (loading) return;
+
+    const focus = searchParams.get('focus');
+    const commentId = searchParams.get('commentId');
+
+    if (focus === 'comment') {
+      setTimeout(() => {
+        textareaRef.current?.focus();
+      }, 100);
+    }
+
+    if (commentId) {
+      setTimeout(() => {
+        const element = document.getElementById(`comment-${commentId}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          element.classList.add('bg-accent/40');
+          setTimeout(() => element.classList.remove('bg-accent/40'), 2000);
+        }
+      }, 100);
+    }
+  }, [loading, searchParams]);
 
   const fetchData = async () => {
     try {
@@ -134,6 +160,7 @@ export default function PostPage({
             >
               <div className="relative">
                 <Textarea
+                  ref={textareaRef}
                   placeholder="Posting balasan anda"
                   value={commentText}
                   onChange={(e) => setCommentText(e.target.value)}
@@ -159,11 +186,16 @@ export default function PostPage({
           </div>
 
           {comments.map((comment) => (
-            <CommentItem
+            <div
               key={comment.id}
-              comment={comment}
-              onDelete={handleDeleteComment}
-            />
+              id={`comment-${comment.id}`}
+              className="transition-colors duration-500"
+            >
+              <CommentItem
+                comment={comment}
+                onDelete={handleDeleteComment}
+              />
+            </div>
           ))}
         </div>
       </main>

@@ -36,7 +36,9 @@ export default function NotificationItem({
         event.stopPropagation();
         if (type === 'follow' && data.follower_username) {
             router.push(`/profile/${data.follower_username}`);
-        } else if ((type === 'like' || type === 'comment') && data.post_id) {
+        } else if (type === 'comment' && data.post_id) {
+            router.push(`/post/${data.post_id}?commentId=${data.comment_id}`);
+        } else if (type === 'like' && data.post_id) {
             router.push(`/post/${data.post_id}`);
         }
     };

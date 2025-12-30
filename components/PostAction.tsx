@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 
+import { useRouter } from 'next/navigation';
+
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { Ellipsis, Heart, MessageCircle } from 'lucide-react';
 import { Copy, Trash, UserPlus } from 'lucide-react';
@@ -52,6 +54,12 @@ export default function PostAction({
   const [liked, setLiked] = useState(initialIsLiked);
   const [likeCount, setLikeCount] = useState(initialLikes);
   const [isFollowed, setIsFollowed] = useState(initialIsFollowed);
+  const router = useRouter();
+
+  const handleCommentClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    router.push(`/post/${postId}?focus=comment`);
+  };
 
   const handleLikeClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
@@ -136,16 +144,14 @@ export default function PostAction({
         <button
           aria-label="Like post"
           onClick={handleLikeClick}
-          className={`peer text-muted-foreground cursor-pointer rounded-sm p-1 transition hover:bg-red-500/10 hover:text-red-500 focus-visible:bg-red-500/10 focus-visible:text-red-500 focus-visible:ring-2 focus-visible:ring-red-300 focus-visible:outline-none ${
-            liked ? 'text-red-500 *:[svg]:fill-red-500' : ''
-          }`}
+          className={`peer text-muted-foreground cursor-pointer rounded-sm p-1 transition hover:bg-red-500/10 hover:text-red-500 focus-visible:bg-red-500/10 focus-visible:text-red-500 focus-visible:ring-2 focus-visible:ring-red-300 focus-visible:outline-none ${liked ? 'text-red-500 *:[svg]:fill-red-500' : ''
+            }`}
         >
           <Heart size={16} />
         </button>
         <span
-          className={`text-sm peer-hover:text-red-500 ${
-            liked ? 'text-red-500' : 'text-muted-foreground'
-          }`}
+          className={`text-sm peer-hover:text-red-500 ${liked ? 'text-red-500' : 'text-muted-foreground'
+            }`}
         >
           {likeCount}
         </span>
@@ -154,7 +160,7 @@ export default function PostAction({
       <div className="flex flex-1 items-center gap-1">
         <button
           aria-label="View comments"
-          onClick={stopPropagation}
+          onClick={handleCommentClick}
           className="peer text-muted-foreground cursor-pointer rounded-sm p-1 transition hover:bg-blue-500/10 hover:text-blue-500 focus-visible:bg-blue-500/10 focus-visible:text-blue-500 focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:outline-none"
         >
           <MessageCircle size={16} />

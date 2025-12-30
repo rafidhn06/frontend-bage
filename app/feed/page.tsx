@@ -48,14 +48,25 @@ export default function FeedPage() {
   }, []);
 
   useEffect(() => {
+    const savedTab = sessionStorage.getItem('feed_tab');
+    if (savedTab && savedTab !== selectedOption) {
+      setSelectedOption(savedTab);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (selectedOption) {
+      sessionStorage.setItem('feed_tab', selectedOption);
+    }
+  }, [selectedOption]);
+
+  useEffect(() => {
     if (!loading && posts.length > 0) {
       const savedPosition = sessionStorage.getItem(
         `scroll_position_${selectedOption}`
       );
       if (savedPosition) {
         window.scrollTo(0, parseInt(savedPosition, 10));
-      } else {
-        window.scrollTo(0, 0);
       }
     }
   }, [loading, posts, selectedOption]);
@@ -69,20 +80,30 @@ export default function FeedPage() {
     };
 
     window.addEventListener('scroll', handleScroll);
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
+    return () => window.removeEventListener('scroll', handleScroll);
   }, [selectedOption]);
 
   const fetchPosts = async () => {
-    setLoading(true);
+    const type = selectedOption === 'Saran' ? 'fyp' : 'following';
+    const cacheKey = `feed_posts_${type}`;
+    const cachedPosts = sessionStorage.getItem(cacheKey);
+
+    if (cachedPosts) {
+      setPosts(JSON.parse(cachedPosts));
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
+
     try {
-      const type = selectedOption === 'Saran' ? 'fyp' : 'following';
       const response = await api.get(`/feed?type=${type}`);
-      setPosts(response.data.data);
+      const newPosts = response.data.data;
+      setPosts(newPosts);
+      sessionStorage.setItem(cacheKey, JSON.stringify(newPosts));
     } catch (error) {
-      toast.error('Gagal memuat unggahan. Silakan coba lagi nanti.');
+      if (!cachedPosts) {
+        toast.error('Gagal memuat unggahan. Silakan coba lagi nanti.');
+      }
     } finally {
       setLoading(false);
     }

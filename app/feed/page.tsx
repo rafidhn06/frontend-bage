@@ -41,7 +41,7 @@ export default function FeedPage() {
         const response = await api.get('/user');
         setUser(response.data);
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        toast.error('Gagal memuat profil pengguna. Silahkan coba lagi nanti.');
       }
     };
     fetchUser();

@@ -143,7 +143,7 @@ export default function PostPage({
                 >
                   <Image
                     src={currentUser.profile_picture_url || ''}
-                    alt={currentUser.username}
+                    alt={`Foto profil ${currentUser.username}`}
                     width={36}
                     height={36}
                   />
@@ -191,10 +191,7 @@ export default function PostPage({
               id={`comment-${comment.id}`}
               className="transition-colors duration-500"
             >
-              <CommentItem
-                comment={comment}
-                onDelete={handleDeleteComment}
-              />
+              <CommentItem comment={comment} onDelete={handleDeleteComment} />
             </div>
           ))}
         </div>

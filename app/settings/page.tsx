@@ -56,7 +56,7 @@ export default function SettingsPage() {
         <Button variant="ghost" size="icon" onClick={() => router.back()}>
           <ArrowLeft size={20} />
         </Button>
-        Settings
+        Pengaturan
       </TopBar>
       <main className="flex flex-col items-center">
         <div className="divide-border w-full max-w-xl divide-y divide-solid">
@@ -69,9 +69,9 @@ export default function SettingsPage() {
                 <User size={20} />
               </div>
               <div className="flex flex-col">
-                <span className="font-semibold">Profile</span>
+                <span className="font-semibold">Profil</span>
                 <span className="text-muted-foreground text-sm">
-                  Edit your and profile picture, username, full name, and bio
+                  Ubah foto profil, username, nama lengkap, dan bio Anda
                 </span>
               </div>
             </div>
@@ -87,9 +87,9 @@ export default function SettingsPage() {
                 <Lock size={20} />
               </div>
               <div className="flex flex-col">
-                <span className="font-semibold">Account</span>
+                <span className="font-semibold">Akun</span>
                 <span className="text-muted-foreground text-sm">
-                  Edit your email and password
+                  Ubah email dan kata sandi Anda
                 </span>
               </div>
             </div>
@@ -102,22 +102,22 @@ export default function SettingsPage() {
                 <div className="p-2">
                   <LogOut size={20} />
                 </div>
-                <span className="font-semibold">Log Out</span>
+                <span className="font-semibold">Keluar</span>
               </button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
               <DialogHeader>
-                <DialogTitle>Delete Account</DialogTitle>
+                <DialogTitle>Keluar</DialogTitle>
                 <DialogDescription>
-                  Are you sure you want to logout from your account?
+                  Apakah Anda yakin ingin keluar dari akun Anda?
                 </DialogDescription>
               </DialogHeader>
               <DialogFooter>
                 <DialogClose asChild>
-                  <Button variant="outline">Cancel</Button>
+                  <Button variant="outline">Batal</Button>
                 </DialogClose>
                 <Button variant="destructive" onClick={handleLogout}>
-                  Logout
+                  Keluar
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -129,23 +129,23 @@ export default function SettingsPage() {
                 <div className="p-2">
                   <Trash2 size={20} />
                 </div>
-                <span className="font-semibold">Delete Account</span>
+                <span className="font-semibold">Hapus Akun</span>
               </button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
               <DialogHeader>
-                <DialogTitle>Delete Account</DialogTitle>
+                <DialogTitle>Hapus Akun</DialogTitle>
                 <DialogDescription>
-                  Are you sure you want to delete your account? This action
-                  cannot be undone.
+                  Apakah Anda yakin ingin menghapus akun Anda? Tindakan ini
+                  tidak dapat dibatalkan.
                 </DialogDescription>
               </DialogHeader>
               <DialogFooter>
                 <DialogClose asChild>
-                  <Button variant="outline">Cancel</Button>
+                  <Button variant="outline">Batal</Button>
                 </DialogClose>
                 <Button variant="destructive" onClick={handleDeleteAccount}>
-                  Delete
+                  Hapus
                 </Button>
               </DialogFooter>
             </DialogContent>

@@ -134,7 +134,7 @@ export default function CreatePostPage() {
 
           setUserLocation({ latitude: lat, longitude: lng });
         }
-      } catch (error) {}
+      } catch (error) { }
     };
 
     const getLocationFromGPS = () => {
@@ -375,7 +375,7 @@ export default function CreatePostPage() {
                   type="button"
                   variant="outline"
                   size="icon"
-                  aria-label="Add new place"
+                  aria-label="Buat tempat baru"
                   onClick={() => router.push('/create/place')}
                 >
                   <Plus size={16} />
@@ -410,7 +410,7 @@ export default function CreatePostPage() {
                           : 'text-muted-foreground/30'
                       )}
                       onClick={() => setRating(ratingValue)}
-                      aria-label={`Set rating to ${ratingValue} stars`}
+                      aria-label={`Atur penilaian ke ${ratingValue} bintang`}
                     >
                       <Star size={24} />
                     </button>
@@ -497,8 +497,12 @@ export default function CreatePostPage() {
 
             <div className="fixed bottom-0 left-0 z-60 flex w-dvw justify-center">
               <div className="bg-background border-border relative flex w-full max-w-xl justify-between gap-2 rounded-t-xl border-x border-t px-3 pt-3 pb-6 shadow-xs">
-                <Button type="submit" className="flex-1" disabled={loading}>
-                  {loading && <Spinner className="inline-block" />}
+                <Button
+                  type="submit"
+                  className="flex-1"
+                  disabled={loading || !selectedPlace || rating === 0}
+                >
+                  {loading && <Spinner aria-hidden className="inline-block" />}
                   Buat unggahan
                 </Button>
               </div>

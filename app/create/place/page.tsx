@@ -188,7 +188,7 @@ export default function CreatePlacePage() {
 
       router.back();
     } catch (error: any) {
-      console.error(error);
+      toast.error('Gagal membuat tempat. Silakan coba lagi nanti.');
       const message =
         error.response?.data?.message ||
         'Terjadi kesalahan. Silakan coba lagi nanti.';
@@ -391,8 +391,14 @@ export default function CreatePlacePage() {
 
             <div className="fixed bottom-0 left-0 z-9999 flex w-dvw justify-center">
               <div className="bg-background border-border relative flex w-full max-w-xl justify-between gap-2 rounded-t-xl border-x border-t px-3 pt-3 pb-6 shadow-xs">
-                <Button type="submit" className="flex-1" disabled={loading}>
-                  {loading && <Spinner className="inline-block" />}
+                <Button
+                  type="submit"
+                  className="flex-1"
+                  disabled={
+                    loading || !name || !selectedCategory || !address || !position
+                  }
+                >
+                  {loading && <Spinner aria-hidden className="inline-block" />}
                   Buat tempat
                 </Button>
               </div>

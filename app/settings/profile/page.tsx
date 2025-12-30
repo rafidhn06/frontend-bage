@@ -1,6 +1,6 @@
 'use client';
 
-import { ChangeEvent, useCallback, useRef, useState } from 'react';
+import { ChangeEvent, useCallback, useEffect, useRef, useState } from 'react';
 import Cropper, { Area } from 'react-easy-crop';
 import { useForm } from 'react-hook-form';
 
@@ -9,8 +9,10 @@ import { useRouter } from 'next/navigation';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ArrowLeft, RefreshCw } from 'lucide-react';
+import { toast } from 'sonner';
 import * as z from 'zod';
 
+import api from '@/lib/axios';
 import TopBar from '@/components/TopBar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -30,24 +32,18 @@ import {
 } from '@/components/ui/input-group';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
+import { Spinner } from '@/components/ui/spinner';
 
-const userProfile = {
-  fullName: 'John Doe',
-  username: '@johndoe',
-  bio: 'Just an ordinary family man. Sometimes a doctor.',
-  avatarUrl: 'https://github.com/shadcn.png',
-  userInitials: 'JD',
-};
 
 const profileSchema = z.object({
-  fullName: z.string().max(100, 'Name cannot exceed 100 characters.'),
+  fullName: z.string().max(100, 'Nama tidak boleh lebih dari 100 karakter'),
   username: z
     .string()
-    .max(50, 'Username cannot exceed 50 characters.')
-    .regex(/^\S*$/, 'Username cannot contain spaces.')
+    .max(50, 'Username tidak boleh lebih dari 50 karakter')
+    .regex(/^\S*$/, 'Username tidak boleh mengandung spasi')
     .optional()
     .or(z.literal('')),
-  bio: z.string().max(150, 'Bio cannot exceed 150 characters.').optional(),
+  bio: z.string().max(150, 'Bio tidak boleh lebih dari 150 karakter').optional(),
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
@@ -110,13 +106,14 @@ export default function ProfileSettingsPage() {
     register,
     handleSubmit,
     watch,
-    formState: { errors, isSubmitting },
+    reset,
+    formState: { errors, isSubmitting, isValid, isDirty },
   } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      fullName: userProfile.fullName,
-      username: userProfile.username.replace('@', ''),
-      bio: userProfile.bio,
+      fullName: '',
+      username: '',
+      bio: '',
     },
     mode: 'onChange',
   });
@@ -146,13 +143,13 @@ export default function ProfileSettingsPage() {
     if (!file) return;
 
     if (!['image/png', 'image/jpeg', 'image/jpg'].includes(file.type)) {
-      alert('Only PNG, JPG, or JPEG files are allowed.');
+      alert('Hanya file PNG, JPG, atau JPEG yang diperbolehkan.');
       resetFileInput();
       return;
     }
 
     if (file.size > 2 * 1024 * 1024) {
-      alert('File size must be less than 2MB.');
+      alert('Ukuran file harus kurang dari 2MB.');
       resetFileInput();
       return;
     }
@@ -166,6 +163,36 @@ export default function ProfileSettingsPage() {
     []
   );
 
+  const [serverAvatarUrl, setServerAvatarUrl] = useState<string | null>(null);
+  const [serverInitials, setServerInitials] = useState<string>('');
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await api.get('/user');
+        const user = response.data.data;
+        reset({
+          fullName: user.name,
+          username: user.username,
+          bio: user.bio,
+        });
+
+        if (user.profile_picture_url) {
+          setServerAvatarUrl(user.profile_picture_url);
+          setServerInitials(user.username.charAt(0).toUpperCase());
+        } else {
+          setServerAvatarUrl(null);
+          setServerInitials(user.username.charAt(0).toUpperCase());
+        }
+
+      } catch (error) {
+        toast.error('Gagal memuat profil. Silakan coba lagi nanti.');
+      }
+    };
+    fetchUser();
+  }, [reset]);
+
+
   const handleCropSave = async () => {
     if (!selectedFile || !croppedAreaPixels) return;
 
@@ -175,15 +202,56 @@ export default function ProfileSettingsPage() {
     );
 
     setCroppedImage(croppedUrl);
+
     resetFileInput();
   };
 
   const handleResetImage = () => {
     setCroppedImage(null);
+    setSelectedFile(null);
     resetFileInput();
   };
 
-  const onSubmit = (data: ProfileFormValues) => {};
+  const onSubmit = async (data: ProfileFormValues) => {
+    try {
+      const formData = new FormData();
+      formData.append('name', data.fullName);
+      if (data.username) formData.append('username', data.username);
+      if (data.bio) formData.append('bio', data.bio);
+
+      if (croppedImage) {
+        const response = await fetch(croppedImage);
+        const blob = await response.blob();
+        formData.append('profile_picture', blob, 'profile.jpg');
+      }
+
+      const response = await api.post('/profile', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      toast.success(response.data.message || 'Profil berhasil diperbarui');
+
+      if (response.data.data.profile_picture_url) {
+        setServerAvatarUrl(response.data.data.profile_picture_url);
+        setCroppedImage(null);
+      }
+
+    } catch (error: any) {
+      if (error.response?.data?.errors) {
+        const apiErrors = error.response.data.errors;
+        if (apiErrors.username) {
+          toast.error(apiErrors.username[0]);
+        }
+        if (apiErrors.profile_picture) {
+          toast.error(apiErrors.profile_picture[0]);
+        }
+      } else {
+        toast.error(error.response?.data?.message || 'Gagal memperbarui profil. Silakan coba lagi nanti.');
+      }
+    }
+  };
 
   return (
     <>
@@ -191,7 +259,7 @@ export default function ProfileSettingsPage() {
         <Button variant="ghost" size="icon" onClick={() => router.back()}>
           <ArrowLeft size={20} />
         </Button>
-        Profile Settings
+        Pengaturan Profil
       </TopBar>
 
       <main className="mx-auto w-full max-w-xl pb-[78px]">
@@ -201,29 +269,29 @@ export default function ProfileSettingsPage() {
               className="text-md mx-auto leading-tight"
               htmlFor="profile-picture"
             >
-              Profile Picture
+              Foto Profil
             </Label>
             <Avatar className="mx-auto my-2 size-20">
               {croppedImage ? (
-                <AvatarImage asChild>
-                  <NextImage
-                    src={croppedImage}
-                    alt="Profile"
-                    width={80}
-                    height={80}
-                  />
+                <AvatarImage asChild src={croppedImage} alt="Foto profil">
+                  <img src={croppedImage} alt="Foto profil" className="aspect-square size-full object-cover" />
                 </AvatarImage>
               ) : (
                 <>
-                  <AvatarImage asChild>
-                    <NextImage
-                      src={userProfile.avatarUrl}
-                      alt={userProfile.fullName}
-                      width={80}
-                      height={80}
-                    />
-                  </AvatarImage>
-                  <AvatarFallback>{userProfile.userInitials}</AvatarFallback>
+                  {serverAvatarUrl ? (
+                    <AvatarImage asChild src={serverAvatarUrl} alt="Foto profil">
+                      <NextImage
+                        src={serverAvatarUrl}
+                        alt="Foto profil"
+                        width={80}
+                        height={80}
+                        priority
+                        unoptimized
+                        className="aspect-square size-full object-cover"
+                      />
+                    </AvatarImage>
+                  ) : null}
+                  <AvatarFallback>{serverInitials}</AvatarFallback>
                 </>
               )}
             </Avatar>
@@ -246,7 +314,7 @@ export default function ProfileSettingsPage() {
               className="mx-auto w-fit"
               id="profile-picture"
             >
-              Change picture
+              Ganti foto
             </Button>
 
             <input
@@ -259,7 +327,7 @@ export default function ProfileSettingsPage() {
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="full-name">Full name</Label>
+            <Label htmlFor="full-name">Nama lengkap</Label>
             <InputGroup>
               <InputGroupInput
                 id="full-name"
@@ -325,9 +393,10 @@ export default function ProfileSettingsPage() {
               <Button
                 className="w-full"
                 onClick={handleSubmit(onSubmit)}
-                disabled={isSubmitting}
+                disabled={isSubmitting || !isValid || (!isDirty && !croppedImage)}
               >
-                Save changes
+                {isSubmitting && <Spinner aria-hidden className="inline-block" />}
+                Simpan perubahan
               </Button>
             </div>
           </div>
@@ -346,9 +415,9 @@ export default function ProfileSettingsPage() {
               </Button>
             </DialogClose>
             <DialogHeader className="flex-1">
-              <DialogTitle>Crop Image</DialogTitle>
+              <DialogTitle>Potong Gambar</DialogTitle>
             </DialogHeader>
-            <Button onClick={handleCropSave}>Save</Button>
+            <Button onClick={handleCropSave}>Simpan</Button>
           </div>
 
           <div className="bg-muted relative h-60">
@@ -369,7 +438,7 @@ export default function ProfileSettingsPage() {
 
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <span>Zoom</span>
+              <span>Perbesar</span>
               <Slider
                 min={1}
                 max={3}

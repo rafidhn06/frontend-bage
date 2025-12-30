@@ -39,13 +39,14 @@ export default function LoginForm() {
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isValid },
   } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       username: '',
       password: '',
     },
+    mode: 'onChange',
   });
 
   async function onSubmit(data: FormValues) {
@@ -61,7 +62,7 @@ export default function LoginForm() {
       if (error instanceof AxiosError) {
         toast.error(
           error.response?.data?.message ||
-            'Terjadi kesalahan. Silakan coba lagi nanti.'
+          'Terjadi kesalahan. Silakan coba lagi nanti.'
         );
       } else {
         toast.error('Terjadi kesalahan. Silakan coba lagi nanti.');
@@ -127,7 +128,7 @@ export default function LoginForm() {
         <Button
           type="submit"
           className="w-full cursor-pointer rounded-full"
-          disabled={isSubmitting}
+          disabled={isSubmitting || !isValid}
         >
           {isSubmitting && <Spinner aria-hidden className="inline-block" />}
           Masuk

@@ -72,7 +72,7 @@ export default function CommentAction({
         <Drawer>
           <DrawerTrigger asChild>
             <button
-              aria-label="More options"
+              aria-label="Opsi lainnya"
               onClick={stopPropagation}
               className="text-muted-foreground hover:bg-accent focus-visible:bg-accent focus-visible:ring-ring/50 cursor-pointer rounded-sm p-1 transition focus:outline-none focus-visible:ring-2"
             >
@@ -105,7 +105,7 @@ export default function CommentAction({
             onClick={stopPropagation}
             className="text-muted-foreground hover:bg-accent focus-visible:bg-accent focus-visible:ring-ring/50 cursor-pointer rounded-sm p-1 transition focus:outline-none focus-visible:ring-2"
           >
-            <button aria-label="More options">
+            <button aria-label="Opsi lainnya">
               <Ellipsis size={16} />
             </button>
           </DropdownMenuTrigger>

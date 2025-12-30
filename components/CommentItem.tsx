@@ -36,7 +36,7 @@ export default function CommentItem({ comment, onDelete }: CommentItemProps) {
             >
               <Image
                 src={comment.user.profile_picture_url || ''}
-                alt={`Kunjungi profil ${comment.user.username}`}
+                alt={`Foto profil ${comment.user.username}`}
                 width={36}
                 height={36}
                 unoptimized

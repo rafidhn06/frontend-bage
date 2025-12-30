@@ -1,6 +1,6 @@
-'use client';
+"use client"
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { useRouter } from 'next/navigation';
@@ -10,23 +10,24 @@ import { ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import * as z from 'zod';
 
+import api from '@/lib/axios';
 import TopBar from '@/components/TopBar';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Spinner } from '@/components/ui/spinner';
 
 const accountSchema = z
   .object({
     email: z
-      .email({ message: 'Invalid email format' })
-      .max(100, { message: 'Email cannot exceed 100 characters' }),
-    currentPassword: z.string().nonempty('Current password is required'),
+      .email({ message: 'Format email tidak valid' })
+      .max(100, { message: 'Email tidak boleh lebih dari 100 karakter' }),
     newPassword: z
       .string()
-      .max(100, { message: 'Password cannot exceed 100 characters' })
+      .max(100, { message: 'Kata sandi tidak boleh lebih dari 100 karakter' })
       .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/, {
-        message: 'At least 8 characters with upper, lower, number, and symbol.',
+        message: 'Minimal 8 karakter dengan huruf besar, huruf kecil, angka, dan simbol',
       })
       .or(z.literal('')),
     confirmPassword: z.string().optional(),
@@ -34,7 +35,7 @@ const accountSchema = z
   .refine(
     (data) => !data.newPassword || data.newPassword === data.confirmPassword,
     {
-      message: 'Password confirmation does not match',
+      message: 'Konfirmasi kata sandi tidak cocok',
       path: ['confirmPassword'],
     }
   );
@@ -49,30 +50,68 @@ export default function AccountSettingsPage() {
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isValid, isDirty },
     reset,
   } = useForm<AccountFormValues>({
     resolver: zodResolver(accountSchema),
     mode: 'onChange',
     defaultValues: {
-      email: 'johndoe@example.com',
-      currentPassword: '',
+      email: '',
       newPassword: '',
       confirmPassword: '',
     },
   });
 
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await api.get('/user');
+        reset({
+          email: response.data.data.email,
+          newPassword: '',
+          confirmPassword: '',
+        });
+      } catch (error) {
+        toast.error('Gagal memuat data pengguna');
+      }
+    };
+    fetchUser();
+  }, [reset]);
+
   const onSubmit = async (data: AccountFormValues) => {
+    setResponseError(null);
     try {
-      toast('Success', { description: 'Account updated successfully' });
+      const payload: any = {
+        email: data.email,
+      };
+
+      if (data.newPassword) {
+        payload.password = data.newPassword;
+        payload.password_confirmation = data.confirmPassword;
+      }
+
+      await api.post('/profile', payload);
+
+      toast.success('Akun berhasil diperbarui');
+
       reset({
-        ...data,
-        currentPassword: '',
+        email: data.email,
         newPassword: '',
         confirmPassword: '',
       });
-    } catch {
-      setResponseError('Something went wrong. Please try again later.');
+    } catch (error: any) {
+      if (error.response?.data?.errors) {
+        const apiErrors = error.response.data.errors;
+        if (apiErrors.email) {
+          setResponseError(apiErrors.email[0]);
+        } else if (apiErrors.password) {
+          setResponseError(apiErrors.password[0]);
+        } else {
+          setResponseError('Gagal memperbarui akun.');
+        }
+      } else {
+        setResponseError('Terjadi kesalahan. Silakan coba lagi nanti.');
+      }
     }
   };
 
@@ -82,7 +121,7 @@ export default function AccountSettingsPage() {
         <Button variant="ghost" size="icon" onClick={() => router.back()}>
           <ArrowLeft size={20} />
         </Button>
-        Account Settings
+        Pengaturan Akun
       </TopBar>
 
       <main className="mx-auto flex w-full max-w-xl flex-col pb-[73px]">
@@ -92,7 +131,7 @@ export default function AccountSettingsPage() {
         >
           <section className="border-border flex flex-col gap-4 border-solid pb-6">
             <span className="text-xl leading-tight font-semibold md:text-lg">
-              Account Info
+              Informasi Akun
             </span>
             <div className="flex flex-col gap-2">
               <Label htmlFor="email" className="text-base md:text-sm">
@@ -114,32 +153,12 @@ export default function AccountSettingsPage() {
 
           <section className="flex flex-col gap-4">
             <span className="text-xl leading-tight font-semibold md:text-lg">
-              Change Password
+              Ubah Kata Sandi
             </span>
 
             <div className="flex flex-col gap-2">
-              <Label
-                htmlFor="current-password"
-                className="text-base md:text-sm"
-              >
-                Current Password
-              </Label>
-              <Input
-                id="current-password"
-                type={showPassword ? 'text' : 'password'}
-                {...register('currentPassword')}
-                className={errors.currentPassword ? 'border-destructive' : ''}
-              />
-              {errors.currentPassword && (
-                <span className="text-destructive text-sm">
-                  {errors.currentPassword.message}
-                </span>
-              )}
-            </div>
-
-            <div className="flex flex-col gap-2">
               <Label htmlFor="new-password" className="text-base md:text-sm">
-                New Password
+                Kata Sandi Baru
               </Label>
               <Input
                 id="new-password"
@@ -159,7 +178,7 @@ export default function AccountSettingsPage() {
                 htmlFor="confirm-password"
                 className="text-base md:text-sm"
               >
-                Confirm New Password
+                Konfirmasi Kata Sandi Baru
               </Label>
               <Input
                 id="confirm-password"
@@ -181,20 +200,25 @@ export default function AccountSettingsPage() {
                 onCheckedChange={(checked) => setShowPassword(!!checked)}
               />
               <label htmlFor="show-password" className="text-sm font-normal">
-                Show passwords
+                Tampilkan kata sandi
               </label>
-              {responseError && (
-                <span className="text-destructive mt-2 text-sm">
-                  {responseError}
-                </span>
-              )}
             </div>
+            {responseError && (
+              <span className="text-destructive mt-2 text-sm">
+                {responseError}
+              </span>
+            )}
           </section>
 
           <div className="fixed bottom-0 left-0 z-60 flex w-dvw justify-center">
             <div className="bg-background border-border relative flex w-full max-w-xl justify-between gap-2 rounded-t-xl border-x border-t px-3 pt-3 pb-6 shadow-xs">
-              <Button type="submit" className="flex-1" disabled={isSubmitting}>
-                Save changes
+              <Button
+                type="submit"
+                className="flex-1"
+                disabled={isSubmitting || !isValid || !isDirty}
+              >
+                {isSubmitting && <Spinner aria-hidden className="inline-block" />}
+                Simpan perubahan
               </Button>
             </div>
           </div>

@@ -10,6 +10,16 @@ import { Ellipsis, Heart, MessageCircle } from 'lucide-react';
 import { Copy, Trash, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import {
   Drawer,
   DrawerContent,
@@ -56,6 +66,7 @@ export default function PostAction({
   const [likeCount, setLikeCount] = useState(initialLikes);
   const [isFollowed, setIsFollowed] = useState(initialIsFollowed);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const router = useRouter();
 
   const handleCommentClick = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -113,29 +124,26 @@ export default function PostAction({
     }
   };
 
-  const handleDelete = async (e: React.MouseEvent<HTMLElement>) => {
+  const handleDeleteClick = (e: React.MouseEvent<HTMLElement>) => {
     e.stopPropagation();
     setIsDrawerOpen(false);
+    setIsDeleteDialogOpen(true);
+  };
 
-    // Slight delay to allow drawer to close smoothy before confirm dialog (optional but nice)
-    // But confirm is blocking, so the drawer closing animation might freeze if we don't wait. 
-    // However, react state update is async.
-
-    setTimeout(async () => {
-      if (!confirm('Apakah anda yakin ingin menghapus postingan ini?')) return;
-
-      try {
-        await api.delete(`/posts/${postId}`);
-        toast.success('Unggahan berhasil dihapus');
-        if (onUpdate) {
-          onUpdate();
-        } else {
-          window.location.reload();
-        }
-      } catch (error) {
-        toast.error('Gagal menghapus unggahan. Silakan coba lagi nanti.');
+  const confirmDelete = async () => {
+    try {
+      await api.delete(`/posts/${postId}`);
+      toast.success('Unggahan berhasil dihapus');
+      if (onUpdate) {
+        onUpdate();
+      } else {
+        window.location.reload();
       }
-    }, 100);
+    } catch (error) {
+      toast.error('Gagal menghapus unggahan. Silakan coba lagi nanti.');
+    } finally {
+      setIsDeleteDialogOpen(false);
+    }
   };
 
   const isXs = useMediaQuery('(max-width: 30rem)');
@@ -151,138 +159,173 @@ export default function PostAction({
     repliesCount > 1000 ? `${(repliesCount / 1000).toFixed(1)}k` : repliesCount;
 
   return (
-    <div className="flex px-3 pt-2">
-      <div className="flex flex-1 items-center gap-1">
-        <button
-          aria-label="Like post"
-          onClick={handleLikeClick}
-          className={`peer text-muted-foreground cursor-pointer rounded-sm p-1 transition hover:bg-red-500/10 hover:text-red-500 focus-visible:bg-red-500/10 focus-visible:text-red-500 focus-visible:ring-2 focus-visible:ring-red-300 focus-visible:outline-none ${liked ? 'text-red-500 *:[svg]:fill-red-500' : ''
+    <>
+      <div className="flex px-3 pt-2">
+        <div className="flex flex-1 items-center gap-1">
+          <button
+            aria-label="Sukai unggahan"
+            onClick={handleLikeClick}
+            className={`peer text-muted-foreground cursor-pointer rounded-sm p-1 transition hover:bg-red-500/10 hover:text-red-500 focus-visible:bg-red-500/10 focus-visible:text-red-500 focus-visible:ring-2 focus-visible:ring-red-300 focus-visible:outline-none ${
+              liked ? 'text-red-500 *:[svg]:fill-red-500' : ''
             }`}
-        >
-          <Heart size={16} />
-        </button>
-        <Link
-          href={`/post/${postId}/likes`}
-          className={`text-sm hover:underline peer-hover:text-red-500 ${liked ? 'text-red-500' : 'text-muted-foreground'
+          >
+            <Heart size={16} />
+          </button>
+          <Link
+            href={`/post/${postId}/likes`}
+            className={`text-sm peer-hover:text-red-500 hover:underline ${
+              liked ? 'text-red-500' : 'text-muted-foreground'
             }`}
-          onClick={stopPropagation}
-        >
-          {likeCount}
-        </Link>
-      </div>
+            onClick={stopPropagation}
+          >
+            {likeCount}
+          </Link>
+        </div>
 
-      <div className="flex flex-1 items-center gap-1">
-        <button
-          aria-label="View comments"
-          onClick={handleCommentClick}
-          className="peer text-muted-foreground cursor-pointer rounded-sm p-1 transition hover:bg-blue-500/10 hover:text-blue-500 focus-visible:bg-blue-500/10 focus-visible:text-blue-500 focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:outline-none"
-        >
-          <MessageCircle size={16} />
-        </button>
-        <span className="text-muted-foreground text-sm peer-hover:text-blue-500">
-          {formattedReplies}
-        </span>
-      </div>
+        <div className="flex flex-1 items-center gap-1">
+          <button
+            aria-label="Komentari unggahan"
+            onClick={handleCommentClick}
+            className="peer text-muted-foreground cursor-pointer rounded-sm p-1 transition hover:bg-blue-500/10 hover:text-blue-500 focus-visible:bg-blue-500/10 focus-visible:text-blue-500 focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:outline-none"
+          >
+            <MessageCircle size={16} />
+          </button>
+          <span className="text-muted-foreground text-sm peer-hover:text-blue-500">
+            {formattedReplies}
+          </span>
+        </div>
 
-      <div className="flex flex-1 justify-end">
-        {isXs ? (
-          <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
-            <DrawerTrigger asChild>
-              <button
-                aria-label="More options"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsDrawerOpen(true);
-                }}
-                className="text-muted-foreground hover:bg-accent focus-visible:bg-accent focus-visible:ring-ring/50 cursor-pointer rounded-sm p-1 transition focus:outline-none focus-visible:ring-2"
-              >
-                <Ellipsis size={16} />
-              </button>
-            </DrawerTrigger>
+        <div className="flex flex-1 justify-end">
+          {isXs ? (
+            <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
+              <DrawerTrigger asChild>
+                <button
+                  aria-label="Opsi lainnya"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsDrawerOpen(true);
+                  }}
+                  className="text-muted-foreground hover:bg-accent focus-visible:bg-accent focus-visible:ring-ring/50 cursor-pointer rounded-sm p-1 transition focus:outline-none focus-visible:ring-2"
+                >
+                  <Ellipsis size={16} />
+                </button>
+              </DrawerTrigger>
 
-            <DrawerContent className="px-6">
-              <DrawerHeader className="hidden">
-                <DrawerTitle>
-                  <VisuallyHidden>More options</VisuallyHidden>
-                </DrawerTitle>
-              </DrawerHeader>
+              <DrawerContent className="px-6">
+                <DrawerHeader className="hidden">
+                  <DrawerTitle>
+                    <VisuallyHidden>More options</VisuallyHidden>
+                  </DrawerTitle>
+                </DrawerHeader>
 
-              <div className="flex flex-col gap-6 py-6">
-                {!isMine && (
+                <div className="flex flex-col gap-6 py-6">
+                  {!isMine && (
+                    <button
+                      className="flex items-center gap-4 text-left font-bold"
+                      onClick={handleFollow}
+                    >
+                      <UserPlus size={16} />
+                      {isFollowed ? 'Berhenti mengikuti' : 'Ikuti user'}
+                    </button>
+                  )}
                   <button
                     className="flex items-center gap-4 text-left font-bold"
+                    onClick={handleCopyLink}
+                  >
+                    <Copy size={16} />
+                    Salin tautan
+                  </button>
+                  {isMine && (
+                    <button
+                      className="flex items-center gap-4 text-left font-bold text-red-600"
+                      onClick={handleDeleteClick}
+                    >
+                      <Trash size={16} />
+                      Hapus unggahan
+                    </button>
+                  )}
+                </div>
+              </DrawerContent>
+            </Drawer>
+          ) : (
+            <DropdownMenu modal={false}>
+              <DropdownMenuTrigger
+                asChild
+                onClick={stopPropagation}
+                className="text-muted-foreground hover:bg-accent focus-visible:bg-accent focus-visible:ring-ring/50 cursor-pointer rounded-sm p-1 transition focus:outline-none focus-visible:ring-2"
+              >
+                <button aria-label="More options">
+                  <Ellipsis size={16} />
+                </button>
+              </DropdownMenuTrigger>
+
+              <DropdownMenuContent
+                align="end"
+                side="top"
+                onCloseAutoFocus={(e) => e.preventDefault()}
+              >
+                {!isMine && (
+                  <DropdownMenuItem
+                    className="flex items-center gap-2 px-3 py-2 font-bold"
                     onClick={handleFollow}
                   >
                     <UserPlus size={16} />
                     {isFollowed ? 'Berhenti mengikuti' : 'Ikuti user'}
-                  </button>
+                  </DropdownMenuItem>
                 )}
-                <button
-                  className="flex items-center gap-4 text-left font-bold"
+                <DropdownMenuItem
+                  className="flex items-center gap-2 px-3 py-2 font-bold"
                   onClick={handleCopyLink}
                 >
                   <Copy size={16} />
                   Salin tautan
-                </button>
+                </DropdownMenuItem>
                 {isMine && (
-                  <button
-                    className="flex items-center gap-4 text-left font-bold text-red-600"
-                    onClick={handleDelete}
+                  <DropdownMenuItem
+                    className="flex items-center gap-2 px-3 py-2 font-bold"
+                    variant="destructive"
+                    onClick={handleDeleteClick}
                   >
                     <Trash size={16} />
-                    Hapus postingan
-                  </button>
+                    Hapus unggahan
+                  </DropdownMenuItem>
                 )}
-              </div>
-            </DrawerContent>
-          </Drawer>
-        ) : (
-          <DropdownMenu modal={false}>
-            <DropdownMenuTrigger
-              asChild
-              onClick={stopPropagation}
-              className="text-muted-foreground hover:bg-accent focus-visible:bg-accent focus-visible:ring-ring/50 cursor-pointer rounded-sm p-1 transition focus:outline-none focus-visible:ring-2"
-            >
-              <button aria-label="More options">
-                <Ellipsis size={16} />
-              </button>
-            </DropdownMenuTrigger>
-
-            <DropdownMenuContent
-              align="end"
-              side='top'
-              onCloseAutoFocus={(e) => e.preventDefault()}
-            >
-              {!isMine && (
-                <DropdownMenuItem
-                  className="flex items-center gap-2 px-3 py-2 font-bold"
-                  onClick={handleFollow}
-                >
-                  <UserPlus size={16} />
-                  {isFollowed ? 'Berhenti mengikuti' : 'Ikuti user'}
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuItem
-                className="flex items-center gap-2 px-3 py-2 font-bold"
-                onClick={handleCopyLink}
-              >
-                <Copy size={16} />
-                Salin tautan
-              </DropdownMenuItem>
-              {isMine && (
-                <DropdownMenuItem
-                  className="flex items-center gap-2 px-3 py-2 font-bold"
-                  variant="destructive"
-                  onClick={handleDelete}
-                >
-                  <Trash size={16} />
-                  Hapus postingan
-                </DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
       </div>
-    </div>
+
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent
+          className="sm:max-w-[425px]"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <DialogHeader>
+            <DialogTitle>Hapus Unggahan</DialogTitle>
+            <DialogDescription>
+              Apakah anda yakin ingin menghapus unggahan ini? Tindakan ini tidak
+              dapat dibatalkan.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline" onClick={(e) => e.stopPropagation()}>
+                Batal
+              </Button>
+            </DialogClose>
+            <Button
+              variant="destructive"
+              onClick={(e) => {
+                e.stopPropagation();
+                confirmDelete();
+              }}
+            >
+              Hapus
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

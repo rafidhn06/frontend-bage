@@ -126,7 +126,7 @@ export default function PostItem({ post, onUpdate }: PostItemProps) {
             >
               <Image
                 src={post.user.profile_picture_url || ''}
-                alt={`Kunjungi profil ${post.user.username}`}
+                alt={`Foto profil ${post.user.username}`}
                 width={36}
                 height={36}
                 unoptimized

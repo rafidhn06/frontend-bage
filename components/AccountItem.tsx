@@ -49,7 +49,7 @@ export default function AccountItem({ user, onFollow }: AccountItemProps) {
           >
             <Image
               src={user.profile_picture_url || ''}
-              alt={user.username}
+              alt={`Foto profil ${user.username}`}
               width={36}
               height={36}
               unoptimized
@@ -59,7 +59,7 @@ export default function AccountItem({ user, onFollow }: AccountItemProps) {
         <AvatarFallback>{user.username.charAt(0).toUpperCase()}</AvatarFallback>
       </Avatar>
 
-      <div className="flex min-w-0 flex-1 flex-grow flex-col gap-1 justify-center">
+      <div className="flex min-w-0 flex-1 flex-grow flex-col justify-center gap-1">
         <div className="flex gap-1">
           <Link
             href={`/profile/${user.username}`}
@@ -74,11 +74,7 @@ export default function AccountItem({ user, onFollow }: AccountItemProps) {
             @{user.username}
           </span>
         </div>
-        {user.bio && (
-          <span className="text-sm">
-            {user.bio}
-          </span>
-        )}
+        {user.bio && <span className="text-sm">{user.bio}</span>}
       </div>
 
       {!user.is_mine && (

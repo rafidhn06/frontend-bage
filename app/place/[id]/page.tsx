@@ -4,17 +4,17 @@ import { useEffect, useState } from 'react';
 
 import { useParams, useRouter } from 'next/navigation';
 
+import { ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 
 import NavigationBar from '@/components/NavigationBar';
 import PlaceDetail from '@/components/PlaceDetail';
 import PostItem from '@/components/PostItem';
+import TopBar from '@/components/TopBar';
+import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import api from '@/lib/axios';
 import { LocationDetail, Post } from '@/types';
-import TopBar from '@/components/TopBar';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
 
 export default function PlaceProfilePage() {
   const params = useParams();
@@ -49,7 +49,7 @@ export default function PlaceProfilePage() {
 
   if (!id) {
     return (
-      <div className="flex h-screen items-center justify-center p-8 text-center text-muted-foreground">
+      <div className="text-muted-foreground flex h-screen items-center justify-center p-8 text-center">
         Tempat tidak ditemukan
       </div>
     );
@@ -65,7 +65,7 @@ export default function PlaceProfilePage() {
 
   if (!location) {
     return (
-      <div className="flex h-screen items-center justify-center p-8 text-center text-muted-foreground">
+      <div className="text-muted-foreground flex h-screen items-center justify-center p-8 text-center">
         Tempat tidak ditemukan
       </div>
     );
@@ -78,7 +78,7 @@ export default function PlaceProfilePage() {
           <Button
             variant="ghost"
             size="icon"
-            aria-label="Go back to previous page"
+            aria-label="Kembali"
             onClick={() => router.back()}
           >
             <ArrowLeft size={20} />
@@ -92,25 +92,25 @@ export default function PlaceProfilePage() {
         </div>
       </TopBar>
 
-      <main className="flex flex-col items-center justify-center pb-[81px] xs:pb-[78px]">
-        <div className="flex w-full max-w-xl flex-col divide-y divide-solid divide-border">
+      <main className="xs:pb-[78px] flex flex-col items-center justify-center pb-[81px]">
+        <div className="divide-border flex w-full max-w-xl flex-col divide-y divide-solid">
           <PlaceDetail
             location={location}
             postCount={posts.length}
             averageRating={
               posts.length > 0
                 ? posts.reduce((acc, post) => acc + (post.rating || 0), 0) /
-                posts.length
+                  posts.length
                 : 0
             }
             totalRatings={posts.length}
           />
 
-          <div className="divide-y divide-solid divide-border">
+          <div className="divide-border divide-y divide-solid">
             {posts.length > 0 ? (
               posts.map((post) => <PostItem key={post.id} post={post} />)
             ) : (
-              <div className="p-8 text-center text-muted-foreground">
+              <div className="text-muted-foreground p-8 text-center">
                 Belum ada unggahan di tempat ini.
               </div>
             )}

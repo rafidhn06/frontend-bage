@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useLayoutEffect, useRef, useState, useCallback } from 'react';
+import { Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -18,6 +18,7 @@ import {
   InputGroupInput,
 } from '@/components/ui/input-group';
 import api from '@/lib/axios';
+import { Spinner } from '@/components/ui/spinner';
 
 function SearchContent() {
   const searchParams = useSearchParams();
@@ -28,15 +29,13 @@ function SearchContent() {
   const [query, setQuery] = useState(initialQuery);
   const [debouncedQuery, setDebouncedQuery] = useState(initialQuery);
 
-  // Store filter type with results to prevent rendering mismatch
   const [dataState, setDataState] = useState<{ filter: string; results: any[] }>({
     filter: f,
     results: []
   });
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(!!initialQuery);
 
-  // Cache stores: results and scroll position for each tab (f)
   const cacheRef = useRef<{
     [key: string]: {
       results: any[];
@@ -46,7 +45,6 @@ function SearchContent() {
 
   const currentQueryRef = useRef(initialQuery);
 
-  // Debounce query
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedQuery(query);
@@ -54,22 +52,18 @@ function SearchContent() {
     return () => clearTimeout(handler);
   }, [query]);
 
-  // Clear cache if query changes
   useEffect(() => {
     if (debouncedQuery !== currentQueryRef.current) {
-      console.log('Query changed, clearing cache');
       cacheRef.current = {};
       currentQueryRef.current = debouncedQuery;
     }
   }, [debouncedQuery]);
 
-  // Save Scroll on clicking a new tab
-  // This is more reliable than doing it in effect during transition
+  const prevFRef = useRef(f);
+
   const handleTabClick = () => {
-    // Save current scroll to current filter cache
     const scrollY = window.scrollY;
     if (!cacheRef.current[f]) {
-      // If for some reason cache is missing, create it with current results if they match
       if (dataState.filter === f) {
         cacheRef.current[f] = { results: dataState.results, scroll: scrollY };
       }
@@ -78,7 +72,6 @@ function SearchContent() {
     }
   };
 
-  // Fetch logic
   useEffect(() => {
     const fetchData = async () => {
       if (!debouncedQuery) {
@@ -88,12 +81,8 @@ function SearchContent() {
 
       setLoading(true);
 
-      // Check cache
       if (cacheRef.current[f]) {
-        // If we have cache, use it
         setDataState({ filter: f, results: cacheRef.current[f].results });
-        // Restore scroll immediately after setting state? 
-        // We can try here, but effect below handles it safer after render.
         setLoading(false);
         return;
       }
@@ -120,7 +109,6 @@ function SearchContent() {
         }
 
         setDataState({ filter: f, results: data });
-        // Save to cache
         cacheRef.current[f] = { results: data, scroll: 0 };
       } catch (error) {
         console.error(error);
@@ -133,21 +121,11 @@ function SearchContent() {
     fetchData();
   }, [debouncedQuery, f]);
 
-  // Restore Scroll
-  // We use useLayoutEffect to restore scroll as early as possible after render
   useLayoutEffect(() => {
     if (!loading && cacheRef.current[f] && dataState.filter === f) {
       const savedScroll = cacheRef.current[f].scroll;
-      // Only scroll if we are not already there (though usually we are at 0 after nav if automated, but we disabled it)
-      // Actually with scroll={false}, we might still be at old scroll position?
-      // Yes! So we MUST scroll to saved position (which might be 0 for new tabs, or saved value for visited tabs).
       window.scrollTo(0, savedScroll);
     } else if (loading) {
-      // If loading, maybe scroll to top? Or keep previous?
-      // Usually safer to scroll to top or keep. 
-      // Let's scroll to top if it's a fresh fetch?
-      // If it's a fresh fetch (not in cache), we set scroll: 0 in cache logic above.
-      // But here we might not hit the if block.
       if (!cacheRef.current[f]) {
         window.scrollTo(0, 0);
       }
@@ -155,11 +133,11 @@ function SearchContent() {
   }, [f, dataState, loading]);
 
   const tabs = [
-    { name: 'Top', value: 'top' },
-    { name: 'Latest', value: 'latest' },
+    { name: 'Populer', value: 'top' },
+    { name: 'Terbaru', value: 'latest' },
     { name: 'Media', value: 'media' },
-    { name: 'People', value: 'people' },
-    { name: 'Places', value: 'places' },
+    { name: 'Orang', value: 'people' },
+    { name: 'Tempat', value: 'places' },
   ];
 
   const isDataReady = dataState.filter === f;
@@ -169,7 +147,7 @@ function SearchContent() {
     <>
       <TopBar className="flex w-full flex-col items-center px-4 pt-4">
         <label htmlFor="search" className="sr-only hidden">
-          Search
+          Cari
         </label>
         <div className="mb-4 w-full max-w-sm">
           <InputGroup className="shadow-none">
@@ -178,7 +156,7 @@ function SearchContent() {
             </InputGroupAddon>
             <InputGroupInput
               id="search"
-              placeholder="Search"
+              placeholder="Cari"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               autoComplete="off"
@@ -186,41 +164,39 @@ function SearchContent() {
           </InputGroup>
         </div>
 
-        {debouncedQuery !== '' && (
-          <div className="no-scrollbar relative flex w-full overflow-x-scroll text-center">
-            {tabs.map((tab) => (
-              <Link
-                key={tab.value}
-                href={`?q=${encodeURIComponent(query)}&f=${tab.value}`}
-                replace
-                scroll={false}
-                onClick={handleTabClick}
-                className="hover:bg-accent focus-visible:bg-accent focus:inset-ring-ring/50 relative flex-1 py-4 text-center transition-colors focus:outline-none focus-visible:inset-ring-2"
+        <div className="no-scrollbar relative flex w-full overflow-x-scroll text-center">
+          {tabs.map((tab) => (
+            <Link
+              key={tab.value}
+              href={`?q=${encodeURIComponent(query)}&f=${tab.value}`}
+              replace
+              scroll={false}
+              onClick={handleTabClick}
+              className="hover:bg-accent focus-visible:bg-accent focus:inset-ring-ring/50 relative flex-1 py-4 text-center transition-colors focus:outline-none focus-visible:inset-ring-2"
+            >
+              <span
+                className={`px-4 transition-colors ${f === tab.value ? 'text-primary font-semibold' : 'text-muted-foreground'}`}
               >
-                <span
-                  className={`px-4 transition-colors ${f === tab.value ? 'text-primary font-semibold' : 'text-muted-foreground'}`}
-                >
-                  {tab.name}
-                </span>
-                {f === tab.value && (
-                  <div className="bg-primary absolute bottom-0 h-1 w-full rounded-full" />
-                )}
-              </Link>
-            ))}
-          </div>
-        )}
+                {tab.name}
+              </span>
+              {f === tab.value && (
+                <div className="bg-primary absolute bottom-0 h-1 w-full rounded-full" />
+              )}
+            </Link>
+          ))}
+        </div>
       </TopBar>
       {debouncedQuery === '' && (
-        <div className="flex h-[calc(100dvh-150px)] w-lvw items-center justify-center">
+        <div className="flex h-[calc(100dvh-250px)] w-lvw items-center justify-center">
           <div className="flex max-w-sm flex-col items-center gap-2 p-8 text-center">
             <div className="bg-muted text-foreground mb-2 flex size-10 items-center justify-center rounded-lg">
               <Search size={24} />
             </div>
             <span className="text-lg font-medium tracking-tight">
-              Start Searching
+              Mulai Mencari
             </span>
             <span className="text-muted-foreground">
-              Enter keywords in the search field above to find the results.
+              Masukkan kata kunci di kolom pencarian di atas untuk menemukan hasil.
             </span>
           </div>
         </div>
@@ -229,9 +205,11 @@ function SearchContent() {
         <main className="xs:pb-[78px] flex items-center justify-center pb-[81px]">
           <div className="divide-border flex w-full max-w-xl flex-col divide-y divide-solid">
             {loading || !isDataReady ? (
-              <div className="p-8 text-center text-muted-foreground">Loading...</div>
+              <div className="flex h-[calc(100dvh-250px)] w-full items-center justify-center">
+                <Spinner className="size-8" />
+              </div>
             ) : displayResults.length === 0 ? (
-              <div className="p-8 text-center text-muted-foreground">No results found.</div>
+              <span className="flex h-[calc(100dvh-250px)] w-full items-center justify-center text-muted-foreground">Tidak ada hasil ditemukan.</span>
             ) : (
               <>
                 {displayResults.map((item: any) => {
@@ -240,7 +218,6 @@ function SearchContent() {
                   } else if (f === 'places') {
                     return <PlaceItem key={item.id} location={item} />;
                   } else {
-                    // posts
                     return <PostItem key={item.id} post={item} />;
                   }
                 })}
@@ -256,7 +233,7 @@ function SearchContent() {
 
 export default function SearchPage() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<div>Memuat...</div>}>
       <SearchContent />
     </Suspense>
   );

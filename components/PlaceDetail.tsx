@@ -27,12 +27,12 @@ interface PlaceDetailProps {
 }
 
 const categoryIconMap: Record<string, LucideIcon> = {
-    kafe: Coffee,
-    restoran: Utensils,
-    taman: Trees,
-    museum: Landmark,
+    coffee: Coffee,
+    utensils: Utensils,
+    tree: Trees,
+    landmark: Landmark,
     hotel: Hotel,
-    'wisata-alam': Mountain,
+    mountain: Mountain,
     ellipsis: Ellipsis,
 };
 
@@ -44,11 +44,11 @@ export default function PlaceDetail({
 }: PlaceDetailProps) {
     const router = useRouter();
 
-    const { name, address, category, description, coordinates, is_mine, slug } =
+    const { name, address, category, description, coordinates, is_mine, icon } =
         location;
 
     const IconComponent =
-        (slug && categoryIconMap[slug]) || categoryIconMap['ellipsis'] || Ellipsis;
+        (icon && categoryIconMap[icon]) || categoryIconMap['ellipsis'] || Ellipsis;
 
     return (
         <>

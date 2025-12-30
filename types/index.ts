@@ -16,6 +16,7 @@ export interface LocationDetail {
     id: number;
     name: string;
     slug: string;
+    icon: string;
     category: string;
     address: string;
     description: string;

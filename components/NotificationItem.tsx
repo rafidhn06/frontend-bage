@@ -151,17 +151,19 @@ export default function NotificationItem({
                     </Button>
                 )}
             </div>
-            {(type === 'like' || type === 'comment') && data.location_name && (
-                <div className="flex flex-1 justify-end">
-                    <Link
-                        href={`/place`}
-                        onClick={stopPropagation}
-                        className="text-muted-foreground text-right text-sm font-semibold hover:underline focus:underline focus:outline-none"
-                    >
-                        {data.location_name}
-                    </Link>
-                </div>
-            )}
+            {(type === 'like' || type === 'comment') &&
+                data.location_name &&
+                data.location_id && (
+                    <div className="flex flex-1 justify-end">
+                        <Link
+                            href={`/place/${data.location_id}`}
+                            onClick={stopPropagation}
+                            className="text-muted-foreground text-right text-sm font-semibold hover:underline focus:underline focus:outline-none"
+                        >
+                            {data.location_name}
+                        </Link>
+                    </div>
+                )}
         </div>
     );
 }

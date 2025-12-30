@@ -20,7 +20,7 @@ export default function CommentItem({ comment, onDelete }: CommentItemProps) {
 
   return (
     <div
-      className="hover:bg-accent/40 has-[a:focus-visible]:bg-accent/40 has-[button:focus-visible]:bg-accent/40 focus-visible:bg-accent/40 flex w-full flex-col gap-3 px-4 py-6 transition-colors focus:outline-none"
+      className="has-[a:focus-visible]:bg-accent/40 has-[button:focus-visible]:bg-accent/40 flex w-full flex-col gap-3 px-4 py-6 transition-colors focus:outline-none"
       tabIndex={0}
     >
       <div className="flex gap-3">
@@ -56,7 +56,7 @@ export default function CommentItem({ comment, onDelete }: CommentItemProps) {
               onClick={stopPropagation}
             >
               <span className="text-sm leading-tight font-semibold">
-                {comment.user.username}
+                {comment.user.name}
               </span>
             </Link>
             <span className="text-muted-foreground text-sm leading-tight">
@@ -72,14 +72,12 @@ export default function CommentItem({ comment, onDelete }: CommentItemProps) {
         </span>
       </div>
 
-      <div className="flex justify-end">
-        <CommentAction
-          commentId={comment.id}
-          isMine={comment.is_owner}
-          onDelete={() => onDelete(comment.id)}
-          stopPropagation={stopPropagation}
-        />
-      </div>
+      <CommentAction
+        commentId={comment.id}
+        isMine={comment.is_owner}
+        onDelete={() => onDelete(comment.id)}
+        stopPropagation={stopPropagation}
+      />
     </div>
   );
 }

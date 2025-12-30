@@ -240,7 +240,7 @@ export default function CreatePostPage() {
     } catch (error: any) {
       const message =
         error.response?.data?.message ||
-        'Terjadi kesalahan. Silakan coba lagi nanti';
+        'Terjadi kesalahan. Silakan coba lagi nanti.';
       toast.error('Gagal membuat unggahan', {
         description: message,
       });
@@ -328,7 +328,7 @@ export default function CreatePostPage() {
                         onValueChange={setSearchQuery}
                       />
                       <CommandList>
-                        <CommandEmpty>Tempat tidak ditemukan.</CommandEmpty>
+                        <CommandEmpty>Tempat tidak ditemukan</CommandEmpty>
                         <CommandGroup>
                           {places.map((place) => (
                             <CommandItem
@@ -472,7 +472,7 @@ export default function CreatePostPage() {
 
                     <span className="text-muted-foreground text-center text-xs">
                       {isMaxFilesReached
-                        ? 'Silakan hapus file yang ada untuk mengunggah lebih banyak.'
+                        ? 'Silakan hapus gambar yang sudah ada untuk mengunggah gambar lain.'
                         : `Atau klik untuk menelusuri (maks ${MAX_FILES} file, sampai ${MAX_FILE_SIZE_MEGABYTES}MB per file)`}
                       <br />
                       Tipe file yang didukung: PNG, JPG, JPEG

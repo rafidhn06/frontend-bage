@@ -158,7 +158,7 @@ export default function PostItem({ post }: PostItemProps) {
 
           {post.location && (
             <Link
-              href={`/location/${post.location.id}`}
+              href={`/place/${post.location.id}`}
               onClick={stopPropagation}
               className="w-fit text-sm hover:underline focus:underline focus:outline-none"
             >

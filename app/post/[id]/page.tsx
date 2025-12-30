@@ -101,7 +101,7 @@ export default function PostPage({
         >
           <ArrowLeft size={20} />
         </Button>
-        Postingan
+        Unggahan
       </TopBar>
 
       <main className="xs:pb-[78px] flex items-center justify-center pb-[81px]">

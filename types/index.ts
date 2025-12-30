@@ -11,12 +11,29 @@ export interface Location {
     name: string;
 }
 
+export interface LocationDetail {
+    id: number;
+    name: string;
+    slug: string;
+    category: string;
+    address: string;
+    description: string;
+    coordinates: {
+        lat: number;
+        lng: number;
+    };
+    registrar?: string;
+    is_mine: boolean;
+    created_at: string;
+}
+
 export interface Comment {
     id: number;
     content: string;
     created_at: string;
     user: {
         id: number;
+        name: string;
         username: string;
         profile_picture_url: string | null;
     };
@@ -46,12 +63,14 @@ export interface Post {
 export interface NotificationData {
     message: string;
     post_id?: number;
+    location_id?: number;
     location_name?: string;
     rating?: number;
     liker_username?: string;
     liker_avatar?: string | null;
     commenter_username?: string;
     commenter_avatar?: string | null;
+    comment_id?: number;
     comment_content?: string;
     follower_id?: number;
     follower_username?: string;

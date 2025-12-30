@@ -61,10 +61,10 @@ export default function LoginForm() {
       if (error instanceof AxiosError) {
         toast.error(
           error.response?.data?.message ||
-            'Terjadi kesalahan. Silakan coba lagi'
+            'Terjadi kesalahan. Silakan coba lagi nanti.'
         );
       } else {
-        toast.error('Terjadi kesalahan. Silakan coba lagi');
+        toast.error('Terjadi kesalahan. Silakan coba lagi nanti.');
       }
     }
   }

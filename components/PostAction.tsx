@@ -97,7 +97,7 @@ export default function PostAction({
       await navigator.clipboard.writeText(url);
       toast.success('Tautan berhasil disalin');
     } catch (error) {
-      toast.error('Gagal menyalin tautan. Silakan coba lagi nanti');
+      toast.error('Gagal menyalin tautan. Silakan coba lagi nanti.');
     }
   };
 
@@ -107,7 +107,7 @@ export default function PostAction({
 
     try {
       await api.delete(`/posts/${postId}`);
-      toast.success('Postingan berhasil dihapus');
+      toast.success('Unggahan berhasil dihapus');
       if (onUpdate) {
         onUpdate();
       } else {

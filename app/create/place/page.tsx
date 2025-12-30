@@ -191,7 +191,7 @@ export default function CreatePlacePage() {
       console.error(error);
       const message =
         error.response?.data?.message ||
-        'Terjadi kesalahan. Silakan coba lagi nanti';
+        'Terjadi kesalahan. Silakan coba lagi nanti.';
       toast.error('Gagal membuat tempat', {
         description: message,
       });

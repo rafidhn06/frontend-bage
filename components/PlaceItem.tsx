@@ -2,13 +2,23 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import { ChevronRight, Trees } from 'lucide-react';
+import { LocationDetail } from '../types';
 
-export default function PlaceItem() {
+interface PlaceItemProps {
+  location: LocationDetail;
+  onClick?: () => void;
+}
+
+export default function PlaceItem({ location, onClick }: PlaceItemProps) {
   const router = useRouter();
 
   const handlePlaceClick = (event: React.MouseEvent<HTMLDivElement>) => {
     event.stopPropagation();
-    router.push('/place');
+    if (onClick) {
+      onClick();
+    } else {
+      router.push(`/place/${location.id}`);
+    }
   };
 
   return (
@@ -24,16 +34,16 @@ export default function PlaceItem() {
         <div className="flex min-w-0 flex-1 flex-grow flex-col gap-1">
           <div className="flex gap-1">
             <Link
-              href="/place"
+              href={`/place/${location.id}`}
               className="flex min-w-0 hover:underline focus:underline focus:outline-none"
             >
               <span className="truncate text-sm font-semibold">
-                Kebun Raya Bogor
+                {location.name}
               </span>
             </Link>
-            <span className="text-muted-foreground flex-1 text-sm">Park</span>
+            <span className="text-muted-foreground flex-1 text-sm">{location.category}</span>
           </div>
-          <span className="text-sm">Jl. Otto Iskandar No.13</span>
+          <span className="text-sm">{location.address}</span>
         </div>
       </div>
       <ChevronRight size={20} className="text-muted-foreground" />

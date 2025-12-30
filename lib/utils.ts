@@ -7,6 +7,9 @@ export function cn(...inputs: ClassValue[]) {
 
 export function formatTimestamp(dateString: string): string {
   const date = new Date(dateString);
+  if (isNaN(date.getTime())) {
+    return dateString;
+  }
   const now = new Date();
   const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
@@ -45,4 +48,21 @@ export function formatTimestamp(dateString: string): string {
     month: 'numeric',
     year: 'numeric',
   }).format(date);
+}
+
+export function formatDetailTimestamp(dateString: string): string {
+  const date = new Date(dateString);
+  const time = new Intl.DateTimeFormat('id-ID', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(date);
+
+  const day = new Intl.DateTimeFormat('id-ID', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(date);
+
+  return `${time} · ${day}`;
 }

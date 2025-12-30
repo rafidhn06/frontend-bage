@@ -146,7 +146,7 @@ export default function CreatePlacePage() {
         const res = await api.get('/categories');
         setCategories(res.data.data);
       } catch (error) {
-        toast.error('Gagal memuat kategori. Silakan coba lagi nanti');
+        toast.error('Gagal memuat kategori. Silakan coba lagi nanti.');
       }
     };
     fetchCategories();

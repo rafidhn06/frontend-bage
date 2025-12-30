@@ -134,7 +134,7 @@ export default function CreatePostPage() {
 
           setUserLocation({ latitude: lat, longitude: lng });
         }
-      } catch (error) { }
+      } catch (error) {}
     };
 
     const getLocationFromGPS = () => {
@@ -175,7 +175,7 @@ export default function CreatePostPage() {
         const res = await api.get('/locations', { params });
         setPlaces(res.data.data);
       } catch (error) {
-        toast.error('Gagal memuat daftar lokasi');
+        toast.error('Gagal memuat daftar tempat. Silakan coba lagi nanti.');
       }
     };
 

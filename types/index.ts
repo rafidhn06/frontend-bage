@@ -12,8 +12,15 @@ export interface Location {
 }
 
 export interface Comment {
-    username: string;
+    id: number;
     content: string;
+    created_at: string;
+    user: {
+        id: number;
+        username: string;
+        profile_picture_url: string | null;
+    };
+    is_owner: boolean;
 }
 
 export interface Media {

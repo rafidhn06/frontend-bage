@@ -128,16 +128,14 @@ export default function PostAction({
         <button
           aria-label="Like post"
           onClick={handleLikeClick}
-          className={`peer text-muted-foreground cursor-pointer rounded-sm p-1 transition hover:bg-red-500/10 hover:text-red-500 focus-visible:bg-red-500/10 focus-visible:text-red-500 focus-visible:ring-2 focus-visible:ring-red-300 focus-visible:outline-none ${
-            liked ? 'text-red-500 *:[svg]:fill-red-500' : ''
-          }`}
+          className={`peer text-muted-foreground cursor-pointer rounded-sm p-1 transition hover:bg-red-500/10 hover:text-red-500 focus-visible:bg-red-500/10 focus-visible:text-red-500 focus-visible:ring-2 focus-visible:ring-red-300 focus-visible:outline-none ${liked ? 'text-red-500 *:[svg]:fill-red-500' : ''
+            }`}
         >
           <Heart size={16} />
         </button>
         <span
-          className={`text-sm peer-hover:text-red-500 ${
-            liked ? 'text-red-500' : 'text-muted-foreground'
-          }`}
+          className={`text-sm peer-hover:text-red-500 ${liked ? 'text-red-500' : 'text-muted-foreground'
+            }`}
         >
           {likeCount}
         </span>

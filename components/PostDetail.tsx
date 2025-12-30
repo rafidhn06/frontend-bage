@@ -17,22 +17,17 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from '@/components/ui/carousel';
+import { formatDetailTimestamp } from '@/lib/utils';
+import { Post } from '@/types';
 
-import { formatTimestamp } from '../lib/utils';
-import { Post } from '../types';
 import PostAction from './PostAction';
 
-interface PostItemProps {
+interface PostDetailProps {
   post: Post;
 }
 
-export default function PostItem({ post }: PostItemProps) {
+export default function PostDetail({ post }: PostDetailProps) {
   const router = useRouter();
-
-  const handlePostClick = (event: React.MouseEvent<HTMLElement>) => {
-    event.stopPropagation();
-    router.push(`/post/${post.id}`);
-  };
 
   const stopPropagation = (e: React.MouseEvent<HTMLElement>) => {
     e.stopPropagation();
@@ -111,8 +106,7 @@ export default function PostItem({ post }: PostItemProps) {
 
   return (
     <article
-      className="has-[button:focus-visible]:bg-accent/40 has-[a:focus-visible]:bg-accent/40 hover:bg-accent/40 focus-visible:bg-accent/40 flex w-full cursor-pointer flex-col gap-4 px-4 py-6 transition-colors"
-      onClick={handlePostClick}
+      className="has-[button:focus-visible]:bg-accent/40 has-[a:focus-visible]:bg-accent/40 flex w-full flex-col gap-4 px-4 py-6 transition-colors"
       tabIndex={0}
     >
       <div className="flex items-center gap-3">
@@ -151,9 +145,6 @@ export default function PostItem({ post }: PostItemProps) {
                 @{post.user.username}
               </span>
             </div>
-            <span className="text-muted-foreground text-sm">
-              {formatTimestamp(post.created_at)}
-            </span>
           </div>
 
           {post.location && (
@@ -242,17 +233,23 @@ export default function PostItem({ post }: PostItemProps) {
         </div>
       )}
 
-      <PostAction
-        postId={post.id}
-        authorId={post.user.id}
-        authorUsername={post.user.username}
-        isMine={post.is_mine}
-        initialLikes={post.total_likes}
-        initialIsLiked={post.is_liked}
-        initialIsFollowed={post.user.is_followed}
-        repliesCount={post.total_comments}
-        stopPropagation={stopPropagation}
-      />
+      <span className="text-muted-foreground text-sm">
+        {formatDetailTimestamp(post.created_at)}
+      </span>
+
+      <div className="border-t-border border-t border-solid pt-4">
+        <PostAction
+          postId={post.id}
+          authorId={post.user.id}
+          authorUsername={post.user.username}
+          isMine={post.is_mine}
+          initialLikes={post.total_likes}
+          initialIsLiked={post.is_liked}
+          initialIsFollowed={post.user.is_followed}
+          repliesCount={post.total_comments}
+          stopPropagation={stopPropagation}
+        />
+      </div>
     </article>
   );
 }

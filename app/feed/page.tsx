@@ -134,9 +134,7 @@ export default function FeedPage() {
                   className="transition-[filter] select-none hover:brightness-80 focus:brightness-80"
                 >
                   <Image
-                    src={
-                      user.profile_picture || ''
-                    }
+                    src={user.profile_picture || ''}
                     alt="Kunjungi halaman profil"
                     width={36}
                     height={36}
@@ -144,7 +142,9 @@ export default function FeedPage() {
                   />
                 </Link>
               </AvatarImage>
-              <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+              <AvatarFallback>
+                {user.username.charAt(0).toUpperCase()}
+              </AvatarFallback>
             </Avatar>
           )}
         </div>
